@@ -53,6 +53,18 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .ico{width:18px;height:18px;flex:none;color:#7b8ba1}
 [aria-pressed=true] .ico{color:currentColor}
 #btnKlasse[aria-pressed=true] .ico{color:var(--accent)}
+.lookwrap{position:relative;display:inline-flex}
+#btnLook .chev{opacity:.6;transition:transform .15s}#btnLook[aria-expanded=true]{background:var(--accent-soft);color:var(--accent)}#btnLook[aria-expanded=true] .chev{transform:rotate(180deg)}
+.pop{position:absolute;top:calc(100% + 8px);left:0;z-index:40;width:236px;max-width:calc(100vw - 32px);background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 40px -14px rgba(20,35,70,.4);padding:12px;display:flex;flex-direction:column;gap:8px}
+.pop[hidden]{display:none}
+.poph{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.pop .seg{align-self:flex-start}
+.looklist{display:flex;flex-direction:column;gap:2px}
+.looklist button{display:flex;align-items:center;gap:10px;border:0;border-radius:9px;padding:7px 9px;text-align:left;background:none;font-weight:600;font-size:14.5px;color:var(--ink)}
+.looklist button:hover{background:var(--soft)}
+.looklist button[aria-pressed=true]{background:var(--accent-soft);color:var(--accent)}
+.sw{width:22px;height:22px;border-radius:6px;border:1px solid rgba(0,0,0,.12);flex:none}
+.pop .bonus{align-self:stretch;justify-content:center;margin-top:2px}
 .seglabel{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .layout{display:flex;gap:16px;align-items:flex-start;justify-content:center}
 .roomcol{flex:0 1 auto;min-width:0;max-width:100%}
@@ -267,28 +279,31 @@ details[open] summary{margin-bottom:10px}
     <div class="roomcol" id="roomCol">
       <nav class="seg nav" aria-label="Bereiche">
         <button data-panel="tische"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M3 12h18M9.5 5.5 12 3l2.5 2.5M9.5 18.5 12 21l2.5-2.5M5.5 9.5 3 12l2.5 2.5M18.5 9.5 21 12l-2.5 2.5"/></svg>Tischordnung</button>
-        <button data-panel="plan"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="3" rx="1"/><rect x="4" y="10" width="6" height="4" rx="1"/><rect x="14" y="10" width="6" height="4" rx="1"/><rect x="4" y="17" width="6" height="4" rx="1"/><rect x="14" y="17" width="6" height="4" rx="1"/></svg>Schüler verteilen</button>
+        <button data-panel="plan"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="3" rx="1"/><rect x="4" y="10" width="6" height="4" rx="1"/><rect x="14" y="10" width="6" height="4" rx="1"/><rect x="4" y="17" width="6" height="4" rx="1"/><rect x="14" y="17" width="6" height="4" rx="1"/></svg>Schüler:innen verteilen</button>
+        <div class="lookwrap">
+          <button id="btnLook" aria-haspopup="true" aria-expanded="false" aria-controls="lookPop"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5c0-4.1-4-7.6-9-7.6z"/><circle cx="7.5" cy="11" r="1.1" fill="currentColor" stroke="none"/><circle cx="10" cy="7" r="1.1" fill="currentColor" stroke="none"/><circle cx="14.5" cy="7" r="1.1" fill="currentColor" stroke="none"/></svg>Look<svg class="chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+          <div class="pop" id="lookPop" hidden>
+            <div class="poph">Ansicht</div>
+            <div class="seg small" role="group" aria-label="Perspektive">
+              <button id="viewS">Schülersicht</button>
+              <button id="viewL">Lehrersicht</button>
+            </div>
+            <div class="poph">Look</div>
+            <div class="looklist" role="group" aria-label="Look">
+              <button data-look="modern"><span class="sw" style="background:linear-gradient(135deg,#f1dfbd 50%,#cfdcf0 50%)"></span>Modern</button>
+              <button data-look="schlicht"><span class="sw" style="background:linear-gradient(135deg,#fff 50%,#222 50%)"></span>Schlicht</button>
+              <button data-look="fach"><span class="sw" style="background:linear-gradient(135deg,#e8edf2 50%,#3d8a5c 50%)"></span>Fachraum</button>
+              <button data-look="custom"><span class="sw" style="background:conic-gradient(#e94e4e,#f2b632,#4cb050,#3d8fd9,#9d6bff,#e94e4e)"></span>Eigene</button>
+              <button data-look="disco"><span class="sw" style="background:linear-gradient(135deg,#ff2bd6,#3b1a7a 55%,#00e5ff)"></span>Disco</button>
+            </div>
+            <button class="bonus" id="btnBonus" hidden title="Geheimes Bonus-Spiel">✦ Bonus-Spiel</button>
+          </div>
+        </div>
         <button data-panel="lose"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="11" height="11" rx="2.5"/><circle cx="6.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="10.5" cy="10.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="17" cy="13" r="2.3"/><path d="M12.5 21c0-2.6 2-4.6 4.5-4.6s4.5 2 4.5 4.6"/></svg>Losen &amp; Gruppen</button>
         <button data-panel="spiel"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 3 3 10.5l7 2.5 2.5 7z"/><path d="M21 3 10 13"/></svg>Minispiel</button>
         <button data-panel="export"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></svg>Export</button>
       </nav>
       <div class="card room">
-        <div class="roombar">
-          <div class="seg small" role="group" aria-label="Perspektive">
-            <button id="viewS">Schülersicht</button>
-            <button id="viewL">Lehrersicht</button>
-          </div>
-          <div class="row" style="gap:6px"><span class="seglabel">Look</span>
-            <div class="seg small" role="group" aria-label="Look">
-              <button data-look="modern">Modern</button>
-              <button data-look="schlicht">Schlicht</button>
-              <button data-look="fach">Fachraum</button>
-              <button data-look="custom">Eigene</button>
-              <button data-look="disco">Disco</button>
-            </div>
-          </div>
-          <button class="bonus" id="btnBonus" hidden title="Geheimes Bonus-Spiel">✦ Bonus-Spiel</button>
-        </div>
         <div class="custom" id="customPanel" hidden>
           <div class="cgrid">
             <div class="cfield"><span>Tische</span><input type="color" data-c="table" aria-label="Farbe Tische"><select data-c="tableMat" aria-label="Material"><option value="holz">Holz</option><option value="glatt">Glatt</option><option value="metall">Metall</option><option value="marmor">Marmor</option></select></div>
@@ -896,7 +911,7 @@ function renderRules(c){
   $('ruleAlt').checked=!!c.rules.alt;
   const ab=c.rules.alt?altBreaks(c,c.seats,geo):0;
   $('altInfo').textContent=`(${nM} m · ${nW} w${nX?` · ${nX} ohne Angabe`:''})`+(c.rules.alt&&ab?` – ${ab}× sitzen gleiche nebeneinander`:'');
-  $('altRow').classList.toggle('bad',c.rules.alt&&ab>altMin(c,geo));
+  $('altRow').classList.toggle('bad',!!(c.rules.alt&&ab>altMin(c,geo)));
   $('ruleList').innerHTML=c.rules.apart.map(([a,b],i)=>{const bad=where[a]&&where[b]&&geo.near(where[a],where[b]);return `<div class="rule${bad?' bad':''}"><span>${nm(a)} <i>nicht neben</i> ${nm(b)}</span><button class="x" data-rdel="a${i}" aria-label="Regel löschen">×</button></div>`;}).join('')
     +c.rules.front.map((id,i)=>{const bad=where[id]&&!geo.front.has(where[id]);return `<div class="rule${bad?' bad':''}"><span>${nm(id)} <i>muss nach vorne</i></span><button class="x" data-rdel="f${i}" aria-label="Regel löschen">×</button></div>`;}).join('');
 }
@@ -1573,7 +1588,12 @@ $('ruleAddFront').onclick=()=>{const c=cur(),f=$('ruleF').value;if(!f){toast('Bi
 $('ruleAlt').onchange=e=>{const c=cur();c.rules.alt=e.target.checked;if(c.rules.alt&&!c.students.some(s=>s.g))toast('Lege zuerst bei „Klassen“ fest, wer m und wer w ist.');commit();};
 $('btnSetG').onclick=()=>setPanel('klasse');
 $('ruleList').onclick=e=>{const b=e.target.closest('[data-rdel]');if(!b)return;const c=cur(),k=b.dataset.rdel,i=+k.slice(1);if(k[0]==='a')c.rules.apart.splice(i,1);else c.rules.front.splice(i,1);commit();};
-$('btnBonus').onclick=()=>setPanel('spiel');$('btnBackRoom').onclick=()=>setPanel('plan');
+function placePop(){const p=$('lookPop');p.style.left='0px';const r=p.getBoundingClientRect(),vw=document.documentElement.clientWidth;if(r.right>vw-12)p.style.left=Math.round(vw-12-r.right)+'px';}
+function lookOpen(o){$('lookPop').hidden=!o;$('btnLook').setAttribute('aria-expanded',String(o));if(o)placePop();}
+$('btnLook').onclick=e=>{e.stopPropagation();lookOpen($('lookPop').hidden);};
+document.addEventListener('click',e=>{if(!$('lookPop').hidden&&!e.target.closest('.lookwrap'))lookOpen(false);});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('lookPop').hidden){lookOpen(false);$('btnLook').focus();}});
+$('btnBonus').onclick=()=>{lookOpen(false);setPanel('spiel');};$('btnBackRoom').onclick=()=>setPanel('plan');
 document.querySelectorAll('[data-look]').forEach(b=>b.onclick=()=>{S.look=b.dataset.look;commit();});
 $('zoomIn').onclick=()=>setZoom((S.zoom||1)+0.1);
 $('zoomOut').onclick=()=>setZoom((S.zoom||1)-0.1);
