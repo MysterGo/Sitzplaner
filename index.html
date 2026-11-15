@@ -746,7 +746,9 @@ Finja</textarea>
           <div class="row"><button id="btnAddNames">Hinzufügen</button><label class="hint" for="csvNames" style="flex:1">oder Liste laden (Excel als CSV, .txt):</label></div>
           <input type="file" id="csvNames" accept=".csv,.txt,text/csv,text/plain">
           <div class="studlist" id="studlist"></div>
-          <div class="fixnames"><span class="hint">Ganze Liste nachträglich ändern:</span><div class="row"><button class="mini" data-fix="swap">Vor-/Nachname tauschen</button><button class="mini" data-fix="abbr">Nachnamen abkürzen</button><button class="mini" data-fix="none">Nachnamen weglassen</button></div></div>
+          <div class="fixnames"><span class="hint">Ganze Liste nachträglich ändern:</span><div class="row"><button class="mini" id="btnNameUndo" hidden>↶ Rückgängig</button><button class="mini" data-fix="swap">Vor-/Nachname tauschen</button><button class="mini" data-fix="abbr">Nachnamen abkürzen</button><button class="mini" data-fix="none">Nachnamen weglassen</button></div></div>
+          <div class="listact"><span></span><button class="link danger" id="btnClearList2">Liste löschen</button></div>
+          <div class="confirmbox" id="clearAsk2" hidden><strong id="clearAskTxt2"></strong><span class="hint">Tische und Aussehen bleiben, alle Namen, Plätze und Regeln dieser Klasse sind danach weg.</span><div class="row"><button class="danger-btn" id="clearYes2">Ja, alle löschen</button><button id="clearNo2">Abbrechen</button></div></div>
         </section>
         <section>
           <h3>Sitzplan-Datei öffnen</h3>
@@ -860,7 +862,7 @@ function cur(){return S.classes.find(c=>c.id===S.current)||S.classes[0];}
 function seatKeys(c){const k=[];c.tables.forEach(t=>DIM[t.type].seats.forEach((_,i)=>k.push(t.id+':'+i)));return k;}
 // Datenschutz: vom Nachnamen nur den Anfangsbuchstaben behalten
 const PARTS=/^(von|vom|van|de|der|den|del|della|di|da|du|dos|zu|zur|zum|ten|ter|la|le|al|el|bin|ibn)$/i;
-function needsAbbr(n){const p=String(n).trim().split(/\s+/);return p.length>1&&!/\.$/.test(p[p.length-1]);}
+function needsAbbr(n){const p=String(n).trim().split(/\s+/);return p.length>1&&!/\.$/.test(p[p.length-1])&&!/^[^\s.]{1,3}\.$/.test(p[0]);}
 function abbrName(n,k){const p=String(n).trim().split(/\s+/);if(p.length<2)return p[0]||'';const last=p.pop();if(/\.$/.test(last))return p.concat(last).join(' ');const ch=[...last];return p.join(' ')+' '+ch.slice(0,Math.min(k||1,ch.length)).join('')+'.';}
 function dropName(n){const p=String(n).trim().split(/\s+/);if(p.length<2)return p[0]||'';let j=p.length-1;while(j>1&&PARTS.test(p[j-1]))j--;return p.slice(0,j).join(' ');}
 function abbrClass(c,only,mode){
@@ -1821,11 +1823,20 @@ function renameFrom(e){const el=e.target.closest('[data-ren]');if(!el)return;con
 function gCycle(st){st.g=!st.g?'m':st.g==='m'?'w':st.g==='w'?'d':undefined;if(!st.g)delete st.g;}
 $('btnClearList').onclick=()=>{const c=cur();if(!c.students.length){toast('Die Liste ist schon leer.');return;}$('clearAskTxt').textContent=`Wirklich alle ${c.students.length} Namen aus „${c.name}“ löschen?`;$('clearAsk').hidden=false;};
 $('clearNo').onclick=()=>{$('clearAsk').hidden=true;};
+$('btnClearList2').onclick=()=>{const c=cur();if(!c.students.length){toast('Die Liste ist schon leer.');return;}$('clearAskTxt2').textContent=`Wirklich alle ${c.students.length} Namen aus „${c.name}“ löschen?`;$('clearAsk2').hidden=false;};
+$('clearNo2').onclick=()=>{$('clearAsk2').hidden=true;};
+$('clearYes2').onclick=()=>{$('clearAsk2').hidden=true;$('clearYes').onclick();};
 $('clearYes').onclick=()=>{const c=cur(),n=c.students.length;c.students=[];c.seats={};c.locked=[];c.picked=[];c.groups=[];c.rules={apart:[],front:[],alt:false};c.prevSeats=null;delete c.savedLayout;pending=null;pickKey=null;$('clearAsk').hidden=true;commit();toast(`${n} Namen gelöscht. Neue Namen über „Namen bearbeiten …“ eintragen.`);};
+let nameUndo=null;
+const isInit=w=>/^[^\s.]{1,3}\.$/.test(w);
 document.querySelectorAll('[data-fix]').forEach(b=>b.onclick=()=>{const c=cur();if(!c.students.length){toast('Noch keine Namen in dieser Klasse.');return;}const f=b.dataset.fix;
-  if(f==='swap'){c.students.forEach(st=>{st.name=flipName(st.name);});commit();toast('Vor- und Nachnamen getauscht.');}
-  else if(f==='abbr'){abbrClass(c,null,'abbr');commit();toast('Nachnamen abgekürzt.');}
+  nameUndo={cid:c.id,names:c.students.map(st=>[st.id,st.name])};$('btnNameUndo').hidden=false;
+  if(f==='swap'){let skip=0;c.students.forEach(st=>{const p=st.name.trim().split(/\s+/);if(p.length<2)return;if(isInit(p[p.length-1])||isInit(p[0])){skip++;return;}st.name=flipName(st.name);});commit();
+    toast(skip?`Getauscht. ${skip} Namen mit Abkürzung blieben unverändert (der Vorname ist dort nicht mehr vorhanden).`:'Vor- und Nachnamen getauscht.');}
+  else if(f==='abbr'){abbrClass(c,null,'abbr');commit();toast('Nachnamen abgekürzt. Mit „↶ Rückgängig“ lässt es sich zurücknehmen.');}
   else{abbrClass(c,null,'none');commit();toast('Nachnamen weggelassen. Bei gleichen Vornamen bleibt ein Buchstabe stehen.');}});
+$('btnNameUndo').onclick=()=>{if(!nameUndo)return;const c=S.classes.find(k=>k.id===nameUndo.cid);if(!c){nameUndo=null;$('btnNameUndo').hidden=true;return;}
+  nameUndo.names.forEach(([id,n])=>{const st=student(c,id);if(st)st.name=n;});nameUndo=null;$('btnNameUndo').hidden=true;commit();toast('Namen wiederhergestellt.');};
 $('studlist2').onclick=e=>{const gb=e.target.closest('[data-g]');if(!gb)return;const st=student(cur(),gb.dataset.g);if(st){gCycle(st);commit();}};
 $('studlist').onclick=e=>{const gb=e.target.closest('[data-g]');if(gb){const st=student(cur(),gb.dataset.g);if(st){gCycle(st);commit();}return;}const b=e.target.closest('[data-del]');if(!b)return;const c=cur(),id=b.dataset.del;c.students=c.students.filter(s=>s.id!==id);const k=seatOf(c,id);if(k)delete c.seats[k];clean(c);commit();};
 $('btnRandom').onclick=()=>{const c=cur();const prev={seats:{...c.seats},locked:[...c.locked]};if(randomize(c)){c.prevSeats=prev;pickKey=null;commit(true);const nr=c.rules.apart.length+c.rules.front.length+(c.rules.alt?1:0),br=c.lastBreaks||0,ab=c.rules.alt?(c.lastAlt||0):0,am=c.rules.alt?altMin(c,ruleGeo(c)):0;toast(ab>am?`Gemischt. m/w im Wechsel ging nicht überall (${ab}× gleiche nebeneinander).`:br?`Gemischt. ${br===1?'Eine Regel ließ':br+' Regeln ließen'} sich nicht einhalten (rot markiert).`:(nr?(nr===1?'Gemischt. Die Regel wurde eingehalten.':`Gemischt. Alle ${nr} Regeln eingehalten.`):(c.locked.length?`Gemischt. ${c.locked.length} fixierte Plätze blieben.`:'Neu gemischt.')));}else toast('Zu wenige freie Plätze.');};
