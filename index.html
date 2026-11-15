@@ -147,6 +147,11 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .nchips{display:flex;flex-wrap:wrap;gap:4px;max-height:132px;overflow:auto}
 .nchips span{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-size:13px;font-weight:600}
 .nchips span i{font-style:normal;color:var(--muted);font-weight:500}
+.listact{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.link.danger{color:#b5462a}
+.confirmbox{display:flex;flex-direction:column;gap:6px;border:1px solid #efc3b6;background:#fbeae5;border-radius:12px;padding:10px 12px}
+.confirmbox[hidden]{display:none}
+.danger-btn{background:#c2452a;border-color:#c2452a;color:#fff;font-weight:700}
 .stepper{display:flex;align-items:center;gap:6px}
 .stepper span{flex:1;font-weight:600}
 .stepper input{width:58px;text-align:center;font-weight:800;-moz-appearance:textfield;padding:6px}
@@ -554,7 +559,8 @@ Finja</textarea>
           <summary>Klassenliste <span class="cnt" id="listCnt"></span></summary>
           <p class="hint">Geschlecht antippen zum Wechseln: m → w → d. „d“ zählt bei „m/w im Wechsel“ nicht und kann überall sitzen.</p>
           <div class="studlist" id="studlist2"></div>
-          <button class="link" data-panel="klasse" style="align-self:flex-start">Namen bearbeiten …</button>
+          <div class="listact"><button class="link" data-panel="klasse">Namen bearbeiten …</button><button class="link danger" id="btnClearList">Liste löschen</button></div>
+          <div class="confirmbox" id="clearAsk" hidden><strong id="clearAskTxt"></strong><span class="hint">Tische und Look bleiben, alle Namen, Plätze und Regeln dieser Klasse sind danach weg.</span><div class="row"><button class="danger-btn" id="clearYes">Ja, alle löschen</button><button id="clearNo">Abbrechen</button></div></div>
         </details>
         <section class="blk">
           <div class="blkhead"><h3>Regeln</h3><button class="mini" id="btnAddRule" aria-expanded="false" aria-controls="rulePop">+ Regel</button></div>
@@ -1783,6 +1789,9 @@ $('klassName').oninput=e=>{cur().name=e.target.value||'Ohne Namen';save();render
 $('btnAddNames').onclick=()=>{const c=cur(),names=$('newNames').value.split(/[\n;]+/).map(s=>s.trim()).filter(Boolean);
   if(!names.length){toast('Keine Namen gefunden.');return;}addNames(c,names);$('newNames').value='';commit();toast(`${names.length} Namen hinzugefügt.`);};
 function gCycle(st){st.g=!st.g?'m':st.g==='m'?'w':st.g==='w'?'d':undefined;if(!st.g)delete st.g;}
+$('btnClearList').onclick=()=>{const c=cur();if(!c.students.length){toast('Die Liste ist schon leer.');return;}$('clearAskTxt').textContent=`Wirklich alle ${c.students.length} Namen aus „${c.name}“ löschen?`;$('clearAsk').hidden=false;};
+$('clearNo').onclick=()=>{$('clearAsk').hidden=true;};
+$('clearYes').onclick=()=>{const c=cur(),n=c.students.length;c.students=[];c.seats={};c.locked=[];c.picked=[];c.groups=[];c.rules={apart:[],front:[],alt:false};c.prevSeats=null;delete c.savedLayout;pending=null;pickKey=null;$('clearAsk').hidden=true;commit();toast(`${n} Namen gelöscht. Neue Namen über „Namen bearbeiten …“ eintragen.`);};
 $('studlist2').onclick=e=>{const gb=e.target.closest('[data-g]');if(!gb)return;const st=student(cur(),gb.dataset.g);if(st){gCycle(st);commit();}};
 $('studlist').onclick=e=>{const gb=e.target.closest('[data-g]');if(gb){const st=student(cur(),gb.dataset.g);if(st){gCycle(st);commit();}return;}const b=e.target.closest('[data-del]');if(!b)return;const c=cur(),id=b.dataset.del;c.students=c.students.filter(s=>s.id!==id);const k=seatOf(c,id);if(k)delete c.seats[k];clean(c);commit();};
 $('btnRandom').onclick=()=>{const c=cur();const prev={seats:{...c.seats},locked:[...c.locked]};if(randomize(c)){c.prevSeats=prev;pickKey=null;commit(true);const nr=c.rules.apart.length+c.rules.front.length+(c.rules.alt?1:0),br=c.lastBreaks||0,ab=c.rules.alt?(c.lastAlt||0):0,am=c.rules.alt?altMin(c,ruleGeo(c)):0;toast(ab>am?`Gemischt. m/w im Wechsel ging nicht überall (${ab}× gleiche nebeneinander).`:br?`Gemischt. ${br===1?'Eine Regel ließ':br+' Regeln ließen'} sich nicht einhalten (rot markiert).`:(nr?(nr===1?'Gemischt. Die Regel wurde eingehalten.':`Gemischt. Alle ${nr} Regeln eingehalten.`):(c.locked.length?`Gemischt. ${c.locked.length} fixierte Plätze blieben.`:'Neu gemischt.')));}else toast('Zu wenige freie Plätze.');};
