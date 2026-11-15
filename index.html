@@ -226,6 +226,7 @@ section{display:flex;flex-direction:column;gap:9px}
 .studlist div span{flex:1;min-width:0}
 .gbtn{min-width:40px;padding:2px 8px!important;margin-right:4px;border-radius:999px!important;font-size:12.5px!important;font-weight:800;border:1px solid var(--line)!important;color:var(--muted)!important;background:var(--surface)!important}
 .gbtn.g-m{background:#e4ecf8!important;border-color:#b8cbea!important;color:#2a5cad!important}
+.gbtn.g-d{background:#efe9f8!important;border-color:#d3c5ea!important;color:#6b4fa0!important}
 .gbtn.g-w{background:#fbe9e4!important;border-color:#efc3b6!important;color:#b5462a!important}
 .altrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;font-weight:600}
 .altrow input{width:18px;height:18px;accent-color:var(--accent)}
@@ -543,6 +544,12 @@ Finja</textarea>
           <h3 id="rosterTitle">Noch ohne Platz</h3>
           <div id="roster" aria-label="Schüler ohne Platz"></div>
         </section>
+        <details class="fold" id="foldList">
+          <summary>Klassenliste <span class="cnt" id="listCnt"></span></summary>
+          <p class="hint">Geschlecht antippen zum Wechseln: m → w → d. „d“ zählt bei „m/w im Wechsel“ nicht und kann überall sitzen.</p>
+          <div class="studlist" id="studlist2"></div>
+          <button class="link" data-panel="klasse" style="align-self:flex-start">Namen bearbeiten …</button>
+        </details>
         <section class="blk">
           <div class="blkhead"><h3>Regeln</h3><button class="mini" id="btnAddRule" aria-expanded="false" aria-controls="rulePop">+ Regel</button></div>
           <div class="rules" id="ruleList"></div>
@@ -689,7 +696,7 @@ Finja</textarea>
         <h2>Neue Klasse</h2>
         <label class="hint" for="ncName">Name der Klasse</label>
         <input type="text" id="ncName" placeholder="z. B. 8a" autocomplete="off">
-        <label class="hint" for="ncNames">Namen: einer pro Zeile, oder eine Spalte aus Excel hineinkopieren. Mit „(m)“ oder „(w)“ dahinter ist das Geschlecht gleich gesetzt.</label>
+        <label class="hint" for="ncNames">Namen: einer pro Zeile, oder eine Spalte aus Excel hineinkopieren. Mit „(m)“, „(w)“ oder „(d)“ dahinter ist das Geschlecht gleich gesetzt.</label>
         <textarea id="ncNames" rows="9" placeholder="Mia Schmidt (w)&#10;Tom Becker (m)&#10;…"></textarea>
         <div class="row"><label class="hint grow" for="ncCsv">oder Liste laden (Excel als CSV, .txt):</label></div>
         <input type="file" id="ncCsv" accept=".csv,.txt,text/csv,text/plain">
@@ -709,7 +716,7 @@ Finja</textarea>
           <h3 id="editTitle">Namen</h3>
           <label class="hint" for="klassName">Name der Klasse</label>
           <input type="text" id="klassName">
-          <label class="hint" for="newNames">Weitere Namen hinzufügen (einer pro Zeile, „(m)“/„(w)“ möglich):</label>
+          <label class="hint" for="newNames">Weitere Namen hinzufügen (einer pro Zeile, „(m)“/„(w)“/„(d)“ möglich):</label>
           <textarea id="newNames" rows="4" placeholder="Mia Schmidt (w)&#10;Tom Becker (m)"></textarea>
           <div class="row"><button id="btnAddNames">Hinzufügen</button><label class="hint" for="csvNames" style="flex:1">oder Liste laden (Excel als CSV, .txt):</label></div>
           <input type="file" id="csvNames" accept=".csv,.txt,text/csv,text/plain">
@@ -992,8 +999,9 @@ function ruleBreaks(c,seats,geo){
   (c.rules.front||[]).forEach(id=>{if(where[id]&&!geo.front.has(where[id]))n++;});
   return n;
 }
+const gKey=st=>st.g==='m'||st.g==='w'?st.g:'';
 function altBreaks(c,seats,geo,gmap){
-  if(!c.rules.alt)return 0;geo=geo||ruleGeo(c);gmap=gmap||Object.fromEntries(c.students.map(s=>[s.id,s.g||'']));let n=0;
+  if(!c.rules.alt)return 0;geo=geo||ruleGeo(c);gmap=gmap||Object.fromEntries(c.students.map(s=>[s.id,gKey(s)]));let n=0;
   for(const [a,b] of geo.pairs){const x=gmap[seats[a]],y=gmap[seats[b]];if(x&&x===y)n++;}return n;
 }
 // kleinstmögliche Zahl gleicher Nachbarn, wenn eine Gruppe größer ist
@@ -1005,10 +1013,10 @@ function renderRules(c){
   ['ruleA','ruleB','ruleF'].forEach(id=>{const el=$(id),v=el.value;el.innerHTML='<option value="">Name …</option>'+opts;if(v&&student(c,v))el.value=v;});
   const geo=ruleGeo(c),where={};for(const k in c.seats)where[c.seats[k]]=k;
   const nm=id=>esc((student(c,id)||{}).name||'?');
-  const nM=c.students.filter(s=>s.g==='m').length,nW=c.students.filter(s=>s.g==='w').length,nX=c.students.length-nM-nW;
+  const nM=c.students.filter(s=>s.g==='m').length,nW=c.students.filter(s=>s.g==='w').length,nD=c.students.filter(s=>s.g==='d').length,nX=c.students.length-nM-nW-nD;
   $('ruleAlt').checked=!!c.rules.alt;
   const ab=c.rules.alt?altBreaks(c,c.seats,geo):0;
-  $('altInfo').textContent=`${nM} m · ${nW} w${nX?` · ${nX} ohne Angabe`:''}`+(c.rules.alt&&ab?` – ${ab}× sitzen gleiche nebeneinander`:'');
+  $('altInfo').textContent=`${nM} m · ${nW} w${nD?` · ${nD} d`:''}${nX?` · ${nX} ohne Angabe`:''}`+(c.rules.alt&&ab?` – ${ab}× sitzen gleiche nebeneinander`:'');
   
   $('ruleList').innerHTML=c.rules.apart.map(([a,b],i)=>{const bad=where[a]&&where[b]&&geo.near(where[a],where[b]);return `<div class="rule${bad?' bad':''}"><span>${nm(a)} <i>↮</i> ${nm(b)}</span><button class="x" data-rdel="a${i}" aria-label="Regel löschen">×</button></div>`;}).join('')
     +c.rules.front.map((id,i)=>{const bad=where[id]&&!geo.front.has(where[id]);return `<div class="rule${bad?' bad':''}"><span>${nm(id)} <i>↑ vorne</i></span><button class="x" data-rdel="f${i}" aria-label="Regel löschen">×</button></div>`;}).join('')
@@ -1022,7 +1030,7 @@ function randomize(c){
   if(pool.length>free.length)return false;
   const alt=!!c.rules.alt,hasRules=(c.rules.apart.length+c.rules.front.length)>0||alt,geo=hasRules?ruleGeo(c):null;
   if(!hasRules){const seats={...keep},f=shuffle([...free]);shuffle([...pool]).forEach((id,i)=>{seats[f[i]]=id;});c.seats=seats;c.lastBreaks=0;c.lastAlt=0;return true;}
-  const gmap=Object.fromEntries(c.students.map(s=>[s.id,s.g||'']));
+  const gmap=Object.fromEntries(c.students.map(s=>[s.id,gKey(s)]));
   const cost=st=>ruleBreaks(c,st,geo)*100+(alt?altBreaks(c,st,geo,gmap):0);
   const freeSet=new Set(free),fr=new Set(c.rules.front);
   let best=null,bestC=1e9;
@@ -1169,7 +1177,7 @@ function tableSVG(t,c,gm){
     if(st){const lb=short(st.name),fit=lb.length*12.2>sw-16?` textLength="${sw-16}" lengthAdjust="spacingAndGlyphs"`:'';
       s+=`<text class="nm" x="${sx}" y="8" text-anchor="middle"${fit} transform="rotate(${tr} ${sx} 0)">${esc(lb)}</text>`;
       if(c.locked.includes(sid))s+=lockSVG(sx+sw/2-17,-hd+17);
-      if(c.rules&&c.rules.alt&&st.g){const gx=sx+sw/2-15,gy=hd-15;s+=`<g class="gmark"><circle cx="${gx}" cy="${gy}" r="9" fill="${st.g==='m'?'#2a5cad':'#c2552f'}" opacity=".9"/><text x="${gx}" y="${gy+4}" text-anchor="middle" font-size="12" font-weight="800" fill="#fff" transform="rotate(${tr} ${gx} ${gy})">${st.g}</text></g>`;}
+      if(c.rules&&c.rules.alt&&st.g){const gx=sx+sw/2-15,gy=hd-15;s+=`<g class="gmark"><circle cx="${gx}" cy="${gy}" r="9" fill="${st.g==='m'?'#2a5cad':st.g==='w'?'#c2552f':'#7b5ea7'}" opacity=".9"/><text x="${gx}" y="${gy+4}" text-anchor="middle" font-size="12" font-weight="800" fill="#fff" transform="rotate(${tr} ${gx} ${gy})">${st.g}</text></g>`;}
       if(gm[sid]!==undefined)s+=gDot(sx-sw/2+18,-hd+18,gm[sid],tr);}
     else s+=`<text class="nm free" x="${sx}" y="6" text-anchor="middle" transform="rotate(${tr} ${sx} 0)">frei</text>`;
     s+=`<rect class="seat-hit${st?'':' empty'}" data-seat="${key}" x="${sx-sw/2+4}" y="${-hd+4}" width="${sw-8}" height="${D.d+CH-8}" rx="8">${st?`<title>${esc(st.name)}</title>`:''}</rect>`;
@@ -1583,7 +1591,12 @@ function renderPanel(){
   [...expOff].forEach(id=>{if(!S.classes.find(k=>k.id===id))expOff.delete(id);});
   $('expClasses').innerHTML=S.classes.map(k=>`<label><input type="checkbox" data-cid="${k.id}"${expOff.has(k.id)?'':' checked'}>${esc(k.name)}<small>${k.students.length} Schüler</small></label>`).join('');
   $('backupInfo').textContent=S.lastBackup?`Letzte Sicherung: ${new Date(S.lastBackup).toLocaleDateString('de-DE')}`:'Noch keine Sicherung gemacht.';
-  $('studlist').innerHTML=c.students.length?[...c.students].sort((a,b)=>a.name.localeCompare(b.name,'de')).map(s=>`<div><span>${esc(s.name)}</span><button class="gbtn g-${s.g||'x'}" data-g="${s.id}" title="Geschlecht: antippen zum Wechseln" aria-label="Geschlecht von ${esc(s.name)}: ${s.g==='m'?'männlich':s.g==='w'?'weiblich':'nicht gesetzt'}">${s.g||'m/w'}</button><button data-del="${s.id}" aria-label="${esc(s.name)} entfernen">×</button></div>`).join(''):'<div><span class="hint">Noch keine Namen.</span></div>';
+  const gLbl=g=>g==='m'?'männlich':g==='w'?'weiblich':g==='d'?'divers':'nicht gesetzt';
+  const gBtn=s=>`<button class="gbtn g-${s.g||'x'}" data-g="${s.id}" title="Geschlecht antippen zum Wechseln: m → w → d" aria-label="Geschlecht von ${esc(s.name)}: ${gLbl(s.g)}">${s.g||'m/w/d'}</button>`;
+  const sorted=[...c.students].sort((a,b)=>a.name.localeCompare(b.name,'de'));
+  $('studlist2').innerHTML=c.students.length?sorted.map(s=>`<div><span>${esc(s.name)}</span>${gBtn(s)}</div>`).join(''):'<div><span class="hint">Noch keine Namen.</span></div>';
+  $('listCnt').textContent=c.students.length||'';
+  $('studlist').innerHTML=c.students.length?[...c.students].sort((a,b)=>a.name.localeCompare(b.name,'de')).map(s=>`<div><span>${esc(s.name)}</span>${gBtn(s)}<button data-del="${s.id}" aria-label="${esc(s.name)} entfernen">×</button></div>`).join(''):'<div><span class="hint">Noch keine Namen.</span></div>';
   const trashIc='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 12.5h9l1-12.5M10 11v5.5M14 11v5.5"/></svg>';
   $('classList').innerHTML=S.classes.map(k=>{
     if(delAsk===k.id)return `<div class="citem ask"><span class="grow">„${esc(k.name)}“ mit allen Namen und Plänen löschen?</span><button class="danger" data-cdel-yes="${k.id}">Löschen</button><button data-cdel-no="1">Abbrechen</button></div>`;
@@ -1728,7 +1741,9 @@ $('btnNewClass2').onclick=openNew;
 $('klassName').oninput=e=>{cur().name=e.target.value||'Ohne Namen';save();renderRoom();$('sideTitle').textContent=cur().name;const o=$('classSel').selectedOptions[0];if(o)o.textContent=cur().name;const t=document.querySelector(`[data-cls="${cur().id}"]`);if(t)t.textContent=cur().name;};
 $('btnAddNames').onclick=()=>{const c=cur(),names=$('newNames').value.split(/[\n;]+/).map(s=>s.trim()).filter(Boolean);
   if(!names.length){toast('Keine Namen gefunden.');return;}names.forEach(n=>c.students.push(mkStudent(n)));$('newNames').value='';commit();toast(`${names.length} Namen hinzugefügt.`);};
-$('studlist').onclick=e=>{const gb=e.target.closest('[data-g]');if(gb){const st=student(cur(),gb.dataset.g);if(st){st.g=!st.g?'m':st.g==='m'?'w':undefined;if(!st.g)delete st.g;commit();}return;}const b=e.target.closest('[data-del]');if(!b)return;const c=cur(),id=b.dataset.del;c.students=c.students.filter(s=>s.id!==id);const k=seatOf(c,id);if(k)delete c.seats[k];clean(c);commit();};
+function gCycle(st){st.g=!st.g?'m':st.g==='m'?'w':st.g==='w'?'d':undefined;if(!st.g)delete st.g;}
+$('studlist2').onclick=e=>{const gb=e.target.closest('[data-g]');if(!gb)return;const st=student(cur(),gb.dataset.g);if(st){gCycle(st);commit();}};
+$('studlist').onclick=e=>{const gb=e.target.closest('[data-g]');if(gb){const st=student(cur(),gb.dataset.g);if(st){gCycle(st);commit();}return;}const b=e.target.closest('[data-del]');if(!b)return;const c=cur(),id=b.dataset.del;c.students=c.students.filter(s=>s.id!==id);const k=seatOf(c,id);if(k)delete c.seats[k];clean(c);commit();};
 $('btnRandom').onclick=()=>{const c=cur();const prev={seats:{...c.seats},locked:[...c.locked]};if(randomize(c)){c.prevSeats=prev;pickKey=null;commit(true);const nr=c.rules.apart.length+c.rules.front.length+(c.rules.alt?1:0),br=c.lastBreaks||0,ab=c.rules.alt?(c.lastAlt||0):0,am=c.rules.alt?altMin(c,ruleGeo(c)):0;toast(ab>am?`Gemischt. m/w im Wechsel ging nicht überall (${ab}× gleiche nebeneinander).`:br?`Gemischt. ${br===1?'Eine Regel ließ':br+' Regeln ließen'} sich nicht einhalten (rot markiert).`:(nr?(nr===1?'Gemischt. Die Regel wurde eingehalten.':`Gemischt. Alle ${nr} Regeln eingehalten.`):(c.locked.length?`Gemischt. ${c.locked.length} fixierte Plätze blieben.`:'Neu gemischt.')));}else toast('Zu wenige freie Plätze.');};
 let cRaf=0;
 $('customPanel').addEventListener('input',e=>{const el=e.target.closest('[data-c]');if(!el)return;S.custom=Object.assign({},CC(),{[el.dataset.c]:el.value});cancelAnimationFrame(cRaf);cRaf=requestAnimationFrame(()=>{save();renderRoom();});});
@@ -1875,9 +1890,9 @@ function importText(txt){
   if(n){S.current=first;$('importBox').value='';sel.clear();pickKey=null;commit();toast(`${n} Klasse${n>1?'n':''} eingelesen.`);}else toast('In der Sicherung wurden keine Klassen gefunden.');
 }
 $('btnImport').onclick=()=>importText($('importBox').value);
-const GX=/\s*\((m|w)\)\s*$/i;
-function mkStudent(n){n=String(n).trim();let g;const m=n.match(GX);if(m){g=m[1].toLowerCase();n=n.replace(GX,'').trim();}else{const w=n.match(/\s+(männlich|weiblich)$/i);if(w){g=w[1][0].toLowerCase()==='m'?'m':'w';n=n.slice(0,w.index).trim();}}const s={id:uid(),name:n};if(g)s.g=g;return s;}
-const gOf=v=>{v=String(v||'').trim().toLowerCase();return v==='m'||v==='männlich'||v==='junge'?'m':(v==='w'||v==='weiblich'||v==='mädchen'?'w':'');};
+const GX=/\s*\((m|w|d)\)\s*$/i;
+function mkStudent(n){n=String(n).trim();let g;const m=n.match(GX);if(m){g=m[1].toLowerCase();n=n.replace(GX,'').trim();}else{const w=n.match(/\s+(männlich|weiblich|divers)$/i);if(w){g=w[1][0].toLowerCase();n=n.slice(0,w.index).trim();}}const s={id:uid(),name:n};if(g)s.g=g;return s;}
+const gOf=v=>{v=String(v||'').trim().toLowerCase();return v==='m'||v==='männlich'||v==='junge'?'m':(v==='w'||v==='weiblich'||v==='mädchen'?'w':(v==='d'||v==='divers'?'d':''));};
 function parseNames(txt){
   const lines=txt.replace(/^\uFEFF/,'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);if(!lines.length)return[];
   const sep=[';','\t',','].find(d=>lines[0].includes(d));
