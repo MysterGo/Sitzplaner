@@ -41,10 +41,8 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px}
 .primary.big{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;font-size:16px;font-weight:800;border-radius:12px}
 .primary.big .ico{width:20px;height:20px}
 .plantools{position:absolute;top:8%;left:50%;transform:translateX(-50%);z-index:5;display:flex;gap:6px}
-.roomframe.flipped .plantools{top:auto;bottom:8%}
 .plantools{max-width:calc(100% - 16px);white-space:nowrap}
 @media (max-width:600px){.plantools{gap:4px;top:6%}.ptool{padding:5px 8px!important;font-size:13px;gap:4px!important}.ptool .ico{width:15px;height:15px}.plantools .inplan .pop{left:0;transform:none}}
-.roomframe.flipped .inplan .pop{top:auto;bottom:calc(100% + 8px)}
 button.primary.rnd{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 16px;font-size:16px;font-weight:800;border-radius:11px}
 .ptool{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:11px;padding:7px 11px;background:rgba(255,255,255,.94);box-shadow:0 6px 18px -10px rgba(20,35,70,.45);font-weight:700;color:var(--ink)}
 .inplan .pop{left:50%;right:auto;transform:translateX(-50%)}
@@ -146,6 +144,8 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .nameopts{display:flex;flex-direction:column;gap:6px;background:var(--accent-soft);border:1px solid #c9d8f0;border-radius:12px;padding:10px 12px}
 .nameopts[hidden]{display:none}
 .nopt-h{font-size:13px;color:var(--accent)}
+.fixnames{display:flex;flex-direction:column;gap:6px}
+.snrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.snrow>span{font-size:13.5px;font-weight:600}
 .nchips{display:flex;flex-wrap:wrap;gap:4px;max-height:132px;overflow:auto}
 .nchips span{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-size:13px;font-weight:600}
 .nchips span i{font-style:normal;color:var(--muted);font-weight:500}
@@ -714,7 +714,7 @@ Finja</textarea>
         <div class="nameopts" id="ncOpts" hidden>
           <strong class="nopt-h">So werden die Namen gespeichert:</strong>
           <div class="nchips" id="ncPrev"></div>
-          <label class="check"><input type="checkbox" id="ncAbbr"> Nachnamen abkürzen (Datenschutz)</label>
+          <div class="snrow"><span>Nachname:</span><div class="seg small" role="group" aria-label="Nachname"><button data-sn="nc:full">ganz</button><button data-sn="nc:abbr">abkürzen</button><button data-sn="nc:none">weglassen</button></div></div>
           <label class="check"><input type="checkbox" id="ncLast"> Nachname steht vorne – Vor- und Nachname tauschen</label>
         </div>
         <div class="row"><label class="hint grow" for="ncCsv">oder Liste laden (Excel als CSV, .txt):</label></div>
@@ -740,12 +740,13 @@ Finja</textarea>
         <div class="nameopts" id="adOpts" hidden>
           <strong class="nopt-h">So werden die Namen gespeichert:</strong>
           <div class="nchips" id="adPrev"></div>
-          <label class="check"><input type="checkbox" id="adAbbr"> Nachnamen abkürzen (Datenschutz)</label>
+          <div class="snrow"><span>Nachname:</span><div class="seg small" role="group" aria-label="Nachname"><button data-sn="ad:full">ganz</button><button data-sn="ad:abbr">abkürzen</button><button data-sn="ad:none">weglassen</button></div></div>
           <label class="check"><input type="checkbox" id="adLast"> Nachname steht vorne – Vor- und Nachname tauschen</label>
         </div>
           <div class="row"><button id="btnAddNames">Hinzufügen</button><label class="hint" for="csvNames" style="flex:1">oder Liste laden (Excel als CSV, .txt):</label></div>
           <input type="file" id="csvNames" accept=".csv,.txt,text/csv,text/plain">
           <div class="studlist" id="studlist"></div>
+          <div class="fixnames"><span class="hint">Ganze Liste nachträglich ändern:</span><div class="row"><button class="mini" data-fix="swap">Vor-/Nachname tauschen</button><button class="mini" data-fix="abbr">Nachnamen abkürzen</button><button class="mini" data-fix="none">Nachnamen weglassen</button></div></div>
         </section>
         <section>
           <h3>Sitzplan-Datei öffnen</h3>
@@ -788,6 +789,7 @@ const SVG_CSS=`.nm{font-family:Figtree,"Helvetica Neue",Arial,sans-serif;font-we
 .nm.free{font-weight:600;font-size:16px;fill:#9a8565;font-style:italic;stroke:none}
 .look-fach .nm.free{fill:#8a94a2}
 .look-schlicht .nm.free{fill:#8a8a8a}
+.nm.ln{font-size:19px;font-weight:700}
 .nm.pill{fill:#1c2633;font-size:19px;stroke:none}
 .look-disco .nm{fill:#fff;paint-order:stroke;stroke:#1a1036;stroke-width:3px}
 .look-disco .nm.free{fill:#a99be0;stroke:none}
@@ -857,9 +859,18 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 function cur(){return S.classes.find(c=>c.id===S.current)||S.classes[0];}
 function seatKeys(c){const k=[];c.tables.forEach(t=>DIM[t.type].seats.forEach((_,i)=>k.push(t.id+':'+i)));return k;}
 // Datenschutz: vom Nachnamen nur den Anfangsbuchstaben behalten
+const PARTS=/^(von|vom|van|de|der|den|del|della|di|da|du|dos|zu|zur|zum|ten|ter|la|le|al|el|bin|ibn)$/i;
 function needsAbbr(n){const p=String(n).trim().split(/\s+/);return p.length>1&&!/\.$/.test(p[p.length-1]);}
 function abbrName(n,k){const p=String(n).trim().split(/\s+/);if(p.length<2)return p[0]||'';const last=p.pop();if(/\.$/.test(last))return p.concat(last).join(' ');const ch=[...last];return p.join(' ')+' '+ch.slice(0,Math.min(k||1,ch.length)).join('')+'.';}
-function abbrClass(c,only){
+function dropName(n){const p=String(n).trim().split(/\s+/);if(p.length<2)return p[0]||'';let j=p.length-1;while(j>1&&PARTS.test(p[j-1]))j--;return p.slice(0,j).join(' ');}
+function abbrClass(c,only,mode){
+  mode=mode||'abbr';
+  if(mode==='none'){const sel=st=>!only||only.has(st.id);const taken=new Map();c.students.forEach(st=>{if(!sel(st))taken.set(st.name,st.id);});
+    const cnt={};c.students.forEach(st=>{const f=sel(st)?dropName(st.name):st.name;cnt[f]=(cnt[f]||0)+1;});
+    c.students.forEach(st=>{if(!sel(st))return;const full=st.name,fn=dropName(full);let a=fn;
+      if((cnt[fn]>1||taken.has(a)&&taken.get(a)!==st.id)&&fn!==full){let k=1;a=abbrName(full,k);while(taken.has(a)&&taken.get(a)!==st.id&&k<4){k++;a=abbrName(full,k);}}
+      let base=a,i=2;while(taken.has(a)&&taken.get(a)!==st.id){a=base+' '+i;i++;}
+      st.name=a;taken.set(a,st.id);});return;}
   const sel=st=>!only||only.has(st.id);
   if(!c.students||!c.students.some(st=>sel(st)&&needsAbbr(st.name)))return;
   const taken=new Map();c.students.forEach(st=>{if(!sel(st)||!needsAbbr(st.name))taken.set(st.name,st.id);});
@@ -892,7 +903,8 @@ function seatOf(c,sid){for(const k in c.seats)if(c.seats[k]===sid)return k;retur
 function student(c,sid){return c.students.find(s=>s.id===sid);}
 
 /* ---------- Anordnungen ---------- */
-const wOf=t=>DIM[t.type].w;
+const KAMM_K=1.25;
+const wOf=t=>DIM[t.type].w*(t.k||1);
 function packRows(ts,maxW,gap){const rows=[[]];let ws=0;for(const t of ts){const w=wOf(t),r=rows[rows.length-1];if(r.length&&ws+gap+w>maxW){rows.push([]);ws=0;}ws+=(rows[rows.length-1].length?gap:0)+w;rows[rows.length-1].push(t);}return rows.filter(r=>r.length);}
 const rowW=(row,gap)=>row.reduce((a,t)=>a+wOf(t),0)+gap*(row.length-1);
 function placeRow(row,cx,y,gap,out,ts,ang){const a=rad(ang||0),tw=rowW(row,gap);let cum=-tw/2;row.forEach(t=>{const w=wOf(t),dx=cum+w/2;out[ts.indexOf(t)]={x:cx+dx*Math.cos(a),y:y+dx*Math.sin(a),r:ang||0};cum+=w+gap;});}
@@ -930,22 +942,23 @@ function lay_u(ts){
   return out;
 }
 function lay_kamm(ts){
-  // Zwei Kämme: Rücken an der Wand, jede Strebe ist ein Doppeltisch oder zwei Einzeltische, der Mitte zugewandt
+  // Zwei Kämme: Rücken an der Wand, jede Strebe ist ein Doppeltisch oder zwei Einzeltische, der Mitte zugewandt (Tische etwas größer)
+  const K=KAMM_K,W=t=>DIM[t.type].w*K,TDK=TD*K,PK=P*K;
   const out=[],sides=[[],[]];sortT(ts).forEach((t,i)=>sides[i%2].push(t));
   const plans=sides.map(list=>{
     const dbl=list.filter(t=>t.type==='double'),sgl=list.filter(t=>t.type==='single'),units=dbl.map(d=>[d]);
     for(let i=0;i+1<sgl.length;i+=2)units.push([sgl[i],sgl[i+1]]);
     for(let k=units.length;k>=0;k--){
-      const struts=units.slice(0,k),used=new Set(struts.flat()),spine=list.filter(t=>!used.has(t)),len=spine.reduce((a,t)=>a+wOf(t),0);
-      if(k===0||(spine.length&&len>=k*P))return{struts,spine,len};
+      const struts=units.slice(0,k),used=new Set(struts.flat()),spine=list.filter(t=>!used.has(t)),len=spine.reduce((a,t)=>a+W(t),0);
+      if(k===0||(spine.length&&len>=k*PK))return{struts,spine,len};
     }
   });
-  const X=AISLE/2+300+TD/2;
+  const X=(BW-2*(WALL+GANG))/2-TDK/2-CH*K;
   plans.forEach((pl,si)=>{
-    const side=si?1:-1,sx=side*X,dir=-side,x0=sx+dir*TD/2;let y=0;
-    pl.spine.forEach(t=>{const w=wOf(t);out[ts.indexOf(t)]={x:sx,y:y+w/2,r:side<0?90:270};y+=w;});
-    const k=pl.struts.length,seg=k?Math.max(P,pl.len/k):0;
-    pl.struts.forEach((st,j)=>{let cum=0;st.forEach(t=>{const w=wOf(t);out[ts.indexOf(t)]={x:x0+dir*(cum+w/2),y:j*seg+TD/2,r:0};cum+=w;});});
+    const side=si?1:-1,sx=side*X,dir=-side,x0=sx+dir*TDK/2;let y=0;
+    pl.spine.forEach(t=>{const w=W(t);out[ts.indexOf(t)]={x:sx,y:y+w/2,r:side<0?90:270,k:K};y+=w;});
+    const k=pl.struts.length,seg=k?Math.max(PK,pl.len/k):0;
+    pl.struts.forEach((st,j)=>{let cum=0;st.forEach(t=>{const w=W(t);out[ts.indexOf(t)]={x:x0+dir*(cum+w/2),y:j*seg+TDK/2,r:0,k:K};cum+=w;});});
   });
   return out;
 }
@@ -975,13 +988,13 @@ const sortT=ts=>[...ts].sort((a,b)=>(a.type===b.type?0:a.type==='double'?-1:1));
 function applyTemplate(c,tpl){
   c.template=tpl;
   if(tpl!=='kreis'){const ts=sortT(c.tables),pos=layoutFor(tpl,ts)||[];
-    ts.forEach((t,i)=>{const p=pos[i]||{x:0,y:0,r:0};t.x=Math.round(p.x);t.y=Math.round(p.y);t.r=norm(Math.round(p.r));});}
+    ts.forEach((t,i)=>{const p=pos[i]||{x:0,y:0,r:0};t.x=Math.round(p.x);t.y=Math.round(p.y);t.r=norm(Math.round(p.r));if(p.k&&p.k!==1)t.k=p.k;else delete t.k;});}
   fitRoom(c,true);
 }
 
 /* ---------- Raumgröße und Gang zur Wand ---------- */
-function corners(t){const D=DIM[t.type],a=rad(t.r),ca=Math.cos(a),sa=Math.sin(a);
-  return [[-D.w/2,-D.d/2],[D.w/2,-D.d/2],[D.w/2,D.d/2+CH],[-D.w/2,D.d/2+CH]].map(([u,v])=>[t.x+u*ca-v*sa,t.y+u*sa+v*ca]);}
+function corners(t){const D=DIM[t.type],k=t.k||1,a=rad(t.r),ca=Math.cos(a),sa=Math.sin(a);
+  return [[-D.w/2,-D.d/2],[D.w/2,-D.d/2],[D.w/2,D.d/2+CH],[-D.w/2,D.d/2+CH]].map(([u,v])=>[t.x+k*(u*ca-v*sa),t.y+k*(u*sa+v*ca)]);}
 function bboxOf(ts){let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;ts.forEach(t=>corners(t).forEach(([X,Y])=>{x0=Math.min(x0,X);y0=Math.min(y0,Y);x1=Math.max(x1,X);y1=Math.max(y1,Y);}));return{x0,y0,x1,y1};}
 function limits(c){const g=gangOf(c);return{x0:WALL+g,x1:c.room.w-WALL-g,y0:WALL+50+GANG,y1:c.room.h-WALL-GANG-BACK};}
 function fitRoom(c,recenter){
@@ -1013,7 +1026,7 @@ function circleSeats(c){
 function seatPos(c,key){
   if(c.template==='kreis'){const p=circleSeats(c).find(p=>p.key===key);return p&&{x:p.x,y:p.y};}
   const [tid,i]=key.split(':'),t=c.tables.find(x=>x.id===tid);if(!t)return null;
-  const sx=DIM[t.type].seats[+i],a=rad(t.r),ly=14;return{x:t.x+sx*Math.cos(a)-ly*Math.sin(a),y:t.y+sx*Math.sin(a)+ly*Math.cos(a)};
+  const k=t.k||1,sx=DIM[t.type].seats[+i]*k,a=rad(t.r),ly=14*k;return{x:t.x+sx*Math.cos(a)-ly*Math.sin(a),y:t.y+sx*Math.sin(a)+ly*Math.cos(a)};
 }
 
 /* ---------- Zufall ---------- */
@@ -1170,6 +1183,17 @@ function buildGroupTables(c){
 /* ---------- Zeichnen: Möbel ---------- */
 function short(n){if(n.length<=12)return n;const p=n.trim().split(/\s+/);if(p.length>1){const s=p[0]+' '+p[p.length-1][0]+'.';if(s.length<=12)return s;}return n.slice(0,11)+'…';}
 const flipDeg=()=>S.flip?180:0;
+// Name waagerecht: Vorname nutzt die volle Breite, Nachname bei Bedarf in 2. Zeile
+const nmW=t=>[...t].reduce((a,ch)=>a+(/[iljtfI.,' ]/.test(ch)?6.5:/[mwMWÖÄÜ]/.test(ch)?17:12.2),0);
+function nameSVG(name,sx,avail,rot){
+  const fitA=(t,w,fs)=>nmW(t)*fs/22>w?` textLength="${w}" lengthAdjust="spacingAndGlyphs"`:'';
+  const p=String(name).trim().split(/\s+/);
+  let inner;
+  if(p.length<2||nmW(name)<=avail)inner=`<text class="nm" x="0" y="8" text-anchor="middle"${fitA(name,avail,22)}>${esc(name)}</text>`;
+  else{let j=p.length-1;while(j>1&&PARTS.test(p[j-1]))j--;const fn=p.slice(0,j).join(' '),ln=p.slice(j).join(' ');
+    inner=`<text class="nm" x="0" y="-3" text-anchor="middle"${fitA(fn,avail,22)}>${esc(fn)}</text><text class="nm ln" x="0" y="17" text-anchor="middle"${fitA(ln,avail,17)}>${esc(ln)}</text>`;}
+  return `<g transform="translate(${sx} 0) rotate(${rot})">${inner}</g>`;
+}
 function textRot(total){const e=norm(total);return e>90&&e<270?180:0;}
 const NEON=['#ff2bd6','#00e5ff','#b6ff00','#ffb000','#9d6bff'];
 const neon=id=>{let h=0;for(const ch of String(id))h=(h*31+ch.charCodeAt(0))|0;return NEON[Math.abs(h)%NEON.length];};
@@ -1198,7 +1222,8 @@ function tableSVG(t,c,gm){
   const D=DIM[t.type],hw=D.w/2,hd=D.d/2,tr=textRot(t.r+flipDeg()),sw=D.w/D.seats.length;
   let tx=t.x,ty=t.y,trr=t.r;if(S.look==='custom'&&(S.fx||{}).chaos){const R=seedRand('ch'+t.id);tx+=Math.round((R()-.5)*90);ty+=Math.round((R()-.5)*70);trr+=Math.round((R()-.5)*44);
     if(KO.has(t.id))return `<g class="tbl" data-table="${t.id}">${knockedTable(t,D,tx,ty,trr+(seedRand('kr'+t.id)()-.5)*120)}</g>`;}
-  let s=`<g class="tbl${sel.has(t.id)?' is-sel':''}" data-table="${t.id}" transform="translate(${tx} ${ty}) rotate(${trr})">`;
+  const tk=t.k||1,tot=norm(trr+flipDeg()),hz=Math.abs(Math.cos(rad(tot)))>=0.7;
+  let s=`<g class="tbl${sel.has(t.id)?' is-sel':''}" data-table="${t.id}" transform="translate(${tx} ${ty}) rotate(${trr})${tk!==1?` scale(${tk})`:''}">`;
   s+=`<rect class="sel-outline" x="${-hw-9}" y="${-hd-9}" width="${D.w+18}" height="${D.d+CH+16}" rx="12"/>`;
   const col=neon(t.id);
   D.seats.forEach(sx=>{s+=chairSVG(sx,hd+6,col);});
@@ -1211,12 +1236,11 @@ function tableSVG(t,c,gm){
   if(S.look==='custom'&&(S.fx||{}).chaos)D.seats.forEach((sx,i)=>{const sid=c.seats[t.id+':'+i];if(sid&&stateOf(t.id,sid)==='table')s+=`<g opacity=".93">${personSVG(sx,-10,(seedRand('tb'+sid)()-.5)*60,seedRand('kid'+sid),{pose:'cheer',scale:1.45})}</g>`;});
   D.seats.forEach((sx,i)=>{
     const key=t.id+':'+i,sid=c.seats[key],st=sid&&student(c,sid);
-    if(st){const lb=short(st.name),fit=lb.length*12.2>sw-16?` textLength="${sw-16}" lengthAdjust="spacingAndGlyphs"`:'';
-      s+=`<text class="nm" x="${sx}" y="8" text-anchor="middle"${fit} transform="rotate(${tr} ${sx} 0)">${esc(lb)}</text>`;
+    if(st){s+=nameSVG(st.name,sx,(hz?sw:D.d)-16,-tot);
       if(c.locked.includes(sid))s+=lockSVG(sx+sw/2-17,-hd+17);
       if(c.rules&&c.rules.alt&&st.g){const gx=sx+sw/2-15,gy=hd-15;s+=`<g class="gmark"><circle cx="${gx}" cy="${gy}" r="9" fill="${st.g==='m'?'#2a5cad':st.g==='w'?'#c2552f':'#7b5ea7'}" opacity=".9"/><text x="${gx}" y="${gy+4}" text-anchor="middle" font-size="12" font-weight="800" fill="#fff" transform="rotate(${tr} ${gx} ${gy})">${st.g}</text></g>`;}
       if(gm[sid]!==undefined)s+=gDot(sx-sw/2+18,-hd+18,gm[sid],tr);}
-    else s+=`<text class="nm free" x="${sx}" y="6" text-anchor="middle" transform="rotate(${tr} ${sx} 0)">frei</text>`;
+    else s+=`<text class="nm free" x="0" y="6" text-anchor="middle" transform="translate(${sx} 0) rotate(${-tot})">frei</text>`;
     s+=`<rect class="seat-hit${st?'':' empty'}" data-seat="${key}" x="${sx-sw/2+4}" y="${-hd+4}" width="${sw-8}" height="${D.d+CH-8}" rx="8">${st?`<title>${esc(st.name)}</title>`:''}</rect>`;
   });
   return s+'</g>';
@@ -1758,16 +1782,16 @@ $('btnView').onclick=()=>{S.flip=!S.flip;commit();};
 $('classTabs').onclick=e=>{const b=e.target.closest('[data-cls]');if(!b||b.dataset.cls===S.current)return;$('classSel').value=b.dataset.cls;$('classSel').onchange({target:$('classSel')});};
 $('btnAddClass').onclick=openNew;
 $('classSel').onchange=e=>{S.current=e.target.value;sel.clear();pending=null;pickKey=null;delConfirm=false;resetPick();commit();};
-function previewNames(txt){const o=nameOpts(),list=parseNames(txt).map(n=>mkStudent(n));if(!o.abbr)return list;
-  const tmp={students:list.map(x=>({...x}))};abbrClass(tmp);return tmp.students;}
-function namePrev(pre,ta){const o=nameOpts();$(pre+'Last').checked=o.lastFirst;$(pre+'Abbr').checked=o.abbr;
+function previewNames(txt){const o=nameOpts(),list=parseNames(txt).map(n=>mkStudent(n));if(o.surname==='full')return list;
+  const tmp={students:list.map(x=>({...x}))};abbrClass(tmp,null,o.surname);return tmp.students;}
+function namePrev(pre,ta){const o=nameOpts();$(pre+'Last').checked=o.lastFirst;document.querySelectorAll(`[data-sn^="${pre}:"]`).forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.sn===pre+':'+o.surname)));
   const v=$(ta).value.trim();$(pre+'Opts').hidden=!v;if(!v){$(pre+'Prev').innerHTML='';return;}
   const list=previewNames(v);$(pre+'Prev').innerHTML=list.slice(0,60).map(x=>`<span>${esc(x.name)}${x.g?` <i>${x.g}</i>`:''}</span>`).join('')+(list.length>60?`<span>… +${list.length-60}</span>`:'');}
 [['nc','ncNames'],['ad','newNames']].forEach(([pre,ta])=>{
   $(pre+'Last').onchange=e=>{nameOpts().lastFirst=e.target.checked;save();namePrev('nc','ncNames');namePrev('ad','newNames');if(pre==='nc')ncUpd();};
-  $(pre+'Abbr').onchange=e=>{nameOpts().abbr=e.target.checked;save();namePrev('nc','ncNames');namePrev('ad','newNames');};
+  document.querySelectorAll(`[data-sn^="${pre}:"]`).forEach(b=>b.onclick=()=>{nameOpts().surname=b.dataset.sn.split(':')[1];save();namePrev('nc','ncNames');namePrev('ad','newNames');});
   $(ta).addEventListener('input',()=>namePrev(pre,ta));});
-function addNames(c,names){const add=names.map(n=>mkStudent(n));c.students.push(...add);if(nameOpts().abbr)abbrClass(c,new Set(add.map(x=>x.id)));return add.length;}
+function addNames(c,names){const add=names.map(n=>mkStudent(n));c.students.push(...add);const m=nameOpts().surname;if(m!=='full')abbrClass(c,new Set(add.map(x=>x.id)),m);return add.length;}
 function ncList(){return parseNames($('ncNames').value);}
 function ncUpd(){const n=ncList().length;$('ncCount').textContent=n?`${n} ${n===1?'Name':'Namen'} – es werden ${n} Einzeltische gestellt und alle zufällig verteilt.`:'Noch keine Namen. Du kannst sie auch später ergänzen.';}
 function openNew(){$('ncName').value='';$('ncNames').value='';ncUpd();namePrev('nc','ncNames');setPanel('neu');setTimeout(()=>$('ncName').focus(),50);}
@@ -1798,6 +1822,10 @@ function gCycle(st){st.g=!st.g?'m':st.g==='m'?'w':st.g==='w'?'d':undefined;if(!s
 $('btnClearList').onclick=()=>{const c=cur();if(!c.students.length){toast('Die Liste ist schon leer.');return;}$('clearAskTxt').textContent=`Wirklich alle ${c.students.length} Namen aus „${c.name}“ löschen?`;$('clearAsk').hidden=false;};
 $('clearNo').onclick=()=>{$('clearAsk').hidden=true;};
 $('clearYes').onclick=()=>{const c=cur(),n=c.students.length;c.students=[];c.seats={};c.locked=[];c.picked=[];c.groups=[];c.rules={apart:[],front:[],alt:false};c.prevSeats=null;delete c.savedLayout;pending=null;pickKey=null;$('clearAsk').hidden=true;commit();toast(`${n} Namen gelöscht. Neue Namen über „Namen bearbeiten …“ eintragen.`);};
+document.querySelectorAll('[data-fix]').forEach(b=>b.onclick=()=>{const c=cur();if(!c.students.length){toast('Noch keine Namen in dieser Klasse.');return;}const f=b.dataset.fix;
+  if(f==='swap'){c.students.forEach(st=>{st.name=flipName(st.name);});commit();toast('Vor- und Nachnamen getauscht.');}
+  else if(f==='abbr'){abbrClass(c,null,'abbr');commit();toast('Nachnamen abgekürzt.');}
+  else{abbrClass(c,null,'none');commit();toast('Nachnamen weggelassen. Bei gleichen Vornamen bleibt ein Buchstabe stehen.');}});
 $('studlist2').onclick=e=>{const gb=e.target.closest('[data-g]');if(!gb)return;const st=student(cur(),gb.dataset.g);if(st){gCycle(st);commit();}};
 $('studlist').onclick=e=>{const gb=e.target.closest('[data-g]');if(gb){const st=student(cur(),gb.dataset.g);if(st){gCycle(st);commit();}return;}const b=e.target.closest('[data-del]');if(!b)return;const c=cur(),id=b.dataset.del;c.students=c.students.filter(s=>s.id!==id);const k=seatOf(c,id);if(k)delete c.seats[k];clean(c);commit();};
 $('btnRandom').onclick=()=>{const c=cur();const prev={seats:{...c.seats},locked:[...c.locked]};if(randomize(c)){c.prevSeats=prev;pickKey=null;commit(true);const nr=c.rules.apart.length+c.rules.front.length+(c.rules.alt?1:0),br=c.lastBreaks||0,ab=c.rules.alt?(c.lastAlt||0):0,am=c.rules.alt?altMin(c,ruleGeo(c)):0;toast(ab>am?`Gemischt. m/w im Wechsel ging nicht überall (${ab}× gleiche nebeneinander).`:br?`Gemischt. ${br===1?'Eine Regel ließ':br+' Regeln ließen'} sich nicht einhalten (rot markiert).`:(nr?(nr===1?'Gemischt. Die Regel wurde eingehalten.':`Gemischt. Alle ${nr} Regeln eingehalten.`):(c.locked.length?`Gemischt. ${c.locked.length} fixierte Plätze blieben.`:'Neu gemischt.')));}else toast('Zu wenige freie Plätze.');};
@@ -1949,9 +1977,8 @@ $('btnImport').onclick=()=>importText($('importBox').value);
 const GX=/\s*\((m|w|d)\)\s*$/i;
 function mkStudent(n){n=String(n).trim();let g;const m=n.match(GX);if(m){g=m[1].toLowerCase();n=n.replace(GX,'').trim();}else{const w=n.match(/\s+(männlich|weiblich|divers)$/i);if(w){g=w[1][0].toLowerCase();n=n.slice(0,w.index).trim();}}const s={id:uid(),name:n};if(g)s.g=g;return s;}
 const gOf=v=>{v=String(v||'').trim().toLowerCase();return v==='m'||v==='männlich'||v==='junge'?'m':(v==='w'||v==='weiblich'||v==='mädchen'?'w':(v==='d'||v==='divers'?'d':''));};
-function nameOpts(){S.nameOpts=S.nameOpts||{lastFirst:true,abbr:true};return S.nameOpts;}
+function nameOpts(){S.nameOpts=S.nameOpts||{lastFirst:true,abbr:true};const o=S.nameOpts;if(!o.surname)o.surname=o.abbr===false?'full':'abbr';return o;}
 function invFlip(n){const p=n.trim().split(/\s+/);if(p.length<2)return n.trim();let j=p.length-1;while(j>1&&PARTS.test(p[j-1]))j--;return p.slice(j).join(' ')+' '+p.slice(0,j).join(' ');}
-const PARTS=/^(von|vom|van|de|der|den|del|della|di|da|du|dos|zu|zur|zum|ten|ter|la|le|al|el|bin|ibn)$/i;
 function flipName(n){const p=n.trim().split(/\s+/);if(p.length<2)return n.trim();let i=0;while(i<p.length-2&&PARTS.test(p[i]))i++;return p.slice(i+1).join(' ')+' '+p.slice(0,i+1).join(' ');}
 function parseNames(txt,lastFirst){if(lastFirst===undefined)lastFirst=nameOpts().lastFirst;
   const lines=txt.replace(/^\uFEFF/,'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);if(!lines.length)return[];
