@@ -803,19 +803,22 @@ function makeClass(name,names,nDouble,nSingle,tpl){
   applyTemplate(c,c.template);
   return c;
 }
-const SAMPLE_NAMES=['Aylin Kaya','Ben Hoffmann','Clara Schulz','Deniz Arslan','Emil Wagner','Finja Becker','Greta Neumann','Hannes Vogel','Ida Krämer','Jonas Richter','Kerem Yıldız','Lea Fischer','Mats Brandt','Nele Hartmann','Ole Zimmermann','Paula Lange','Quentin Roth','Romy Schäfer','Samuel Weiß','Tilda Koch','Ujin Park','Vincent Bauer','Wiebke Lorenz','Yusuf Çelik','Zoe Albrecht','Malik Osei','Lina Wolf','Theo Krause','Mia Braun','Jan Peters'];
+const OLD_SAMPLE=['Aylin Kaya','Ben Hoffmann','Clara Schulz','Deniz Arslan','Emil Wagner','Finja Becker','Greta Neumann','Hannes Vogel','Ida Krämer','Jonas Richter','Kerem Yıldız','Lea Fischer','Mats Brandt','Nele Hartmann','Ole Zimmermann','Paula Lange','Quentin Roth','Romy Schäfer','Samuel Weiß','Tilda Koch','Ujin Park','Vincent Bauer','Wiebke Lorenz','Yusuf Çelik','Zoe Albrecht','Malik Osei','Lina Wolf','Theo Krause','Mia Braun','Jan Peters'];
+const FUN_NAMES=[['Anton Apfelkern','m'],['Bella Blümchen','w'],['Carlo Comet','m'],['Dora Dattel','w'],['Emil Eisberg','m'],['Frida Funkel','w'],['Gustav Gurke','m'],['Hanna Honigtopf','w'],['Ivo Igel','m'],['Jule Jojo','w'],['Karl Kakao','m'],['Lotta Lakritz','w'],['Moritz Murmel','m'],['Nala Nachteule','w'],['Otto Ohrwurm','m'],['Pia Pfannkuchen','w'],['Quirin Quark','m'],['Rosa Regenbogen','w'],['Sami Sternschnuppe','m'],['Tilda Tintenfass','w'],['Udo Ukulele','m'],['Vera Vanille','w'],['Willi Wackelzahn','m'],['Xenia Xylofon','w'],['Yannik Yeti','m'],['Zora Zebra','w'],['Leo Löwenzahn','m'],['Mila Marzipan','w'],['Finn Flummi','m'],['Ella Erdbeer','w']];
+const SAMPLE_NAMES=FUN_NAMES.map(x=>x[0]);
 function sample(){
-  const names=['Aylin Kaya','Ben Hoffmann','Clara Schulz','Deniz Arslan','Emil Wagner','Finja Becker','Greta Neumann','Hannes Vogel','Ida Krämer','Jonas Richter','Kerem Yıldız','Lea Fischer','Mats Brandt','Nele Hartmann','Ole Zimmermann','Paula Lange','Quentin Roth','Romy Schäfer','Samuel Weiß','Tilda Koch','Ujin Park','Vincent Bauer','Wiebke Lorenz','Yusuf Çelik','Zoe Albrecht','Malik Osei'];
-  names.push('Lina Wolf','Theo Krause','Mia Braun','Jan Peters');const c=makeClass('7b (Beispiel)',names,0,30,'bloecke');randomize(c);
-  return {v:11,zoom:1,classes:[c],current:c.id,flip:false,look:'modern'};
+  const c=makeClass('7b (Beispiel)',[],0,30,'bloecke');c.students=FUN_NAMES.map(([n,g])=>({id:uid(),name:n,g}));randomize(c);
+  return {v:12,zoom:1,classes:[c],current:c.id,flip:false,look:'modern'};
 }
 const validTpl=id=>!!TPL.find(t=>t.id===id);
 function load(){
   try{const t=localStorage.getItem(KEY);if(t){const s=JSON.parse(t);if(s&&Array.isArray(s.classes)&&s.classes.length){
     const v=s.v||0,map={versetzt:'bloecke',reihen:'bloecke',gruppen:'schraeg',ustreben:'u',bogen:'bloecke',pruefung:'einzel',frei:'bloecke',fisch:'bloecke',kreis:'bloecke'};
     s.classes.forEach(c=>{const orig=c.template;clean(c);if(v<7||orig==='kreis'||orig==='versetzt')applyTemplate(c,validTpl(orig)?orig:(map[orig]||'bloecke'));if(v<9)toSingles(c);if(v<10)toSingles(c,true);
-      if(v<11&&c.name==='7b (Beispiel)'&&c.students.length<30){const have=new Set(c.students.map(x=>x.name));SAMPLE_NAMES.filter(n=>!have.has(n)).slice(0,30-c.students.length).forEach(n=>{const st={id:uid(),name:n};c.students.push(st);const free=seatKeys(c).find(k=>!c.seats[k]);if(free)c.seats[free]=st.id;});}});
-    s.v=11;if(!s.classes.find(c=>c.id===s.current))s.current=s.classes[0].id;s.look=(!s.look||s.look==='foto')?'modern':s.look;if(typeof s.zoom!=='number')s.zoom=1;return s;}}}catch(e){}
+      if(v<11&&c.name==='7b (Beispiel)'&&c.students.length<30){const have=new Set(c.students.map(x=>x.name));SAMPLE_NAMES.filter(n=>!have.has(n)).slice(0,30-c.students.length).forEach(n=>{const st={id:uid(),name:n};c.students.push(st);const free=seatKeys(c).find(k=>!c.seats[k]);if(free)c.seats[free]=st.id;});}
+      if(v<12&&/Beispiel/.test(c.name)){const oldSet=new Set(OLD_SAMPLE);let k=0;const used=new Set(c.students.map(x=>x.name));const pool=FUN_NAMES.filter(([n])=>!used.has(n));
+        c.students.forEach(st=>{if(oldSet.has(st.name)&&k<pool.length){st.name=pool[k][0];st.g=pool[k][1];k++;}});}});
+    s.v=12;if(!s.classes.find(c=>c.id===s.current))s.current=s.classes[0].id;s.look=(!s.look||s.look==='foto')?'modern':s.look;if(typeof s.zoom!=='number')s.zoom=1;return s;}}}catch(e){}
   return sample();
 }
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
