@@ -599,6 +599,19 @@ Finja</textarea>
           <h3>Favoriten</h3>
           <div class="favs" id="favs"></div>
         </section>
+        <section class="blk">
+          <h3>Import: Sitzplan-Datei öffnen</h3>
+          <p class="hint">Lädt eine gespeicherte Sitzplan-Datei. Die Klassen daraus kommen dazu. Gleiche Klassen werden durch den Stand aus der Datei ersetzt.</p>
+          <button class="primary" id="btnOpen">Datei öffnen …</button>
+          <input type="file" id="importFile" accept=".json,.txt,application/json,text/plain" hidden>
+          <details>
+            <summary>Text einfügen statt Datei</summary>
+            <section>
+              <textarea id="importBox" rows="2" placeholder="Kopierten Text hier einfügen" aria-label="Sitzplan-Daten einfügen"></textarea>
+              <button id="btnImport">Einlesen</button>
+            </section>
+          </details>
+        </section>
       </div>
 
       <div class="pane" id="pane-tische" hidden>
@@ -704,7 +717,7 @@ Finja</textarea>
           <button class="link" id="btnExport" style="align-self:flex-start">Stattdessen als Text kopieren</button>
           <textarea id="exportBox" rows="3" readonly aria-label="Sitzplan-Daten als Text" hidden></textarea>
           <p class="hint" id="backupInfo"></p>
-          <p class="hint">Öffnen geht später über „Bearbeiten“ → „Sitzplan-Datei öffnen“.</p>
+          <p class="hint">Öffnen geht später über „Verteilen“ → „Import: Sitzplan-Datei öffnen“ (unter den Favoriten).</p>
           </div>
         </details>
       </div>
@@ -754,19 +767,7 @@ Finja</textarea>
           <div class="listact"><span></span><button class="link danger" id="btnClearList2">Liste löschen</button></div>
           <div class="confirmbox" id="clearAsk2" hidden><strong id="clearAskTxt2"></strong><span class="hint">Tische und Aussehen bleiben, alle Namen, Plätze und Regeln dieser Klasse sind danach weg.</span><div class="row"><button class="danger-btn" id="clearYes2">Ja, alle löschen</button><button id="clearNo2">Abbrechen</button></div></div>
         </section>
-        <section>
-          <h3>Sitzplan-Datei öffnen</h3>
-          <p class="hint">Lädt eine gespeicherte Sitzplan-Datei. Die Klassen daraus kommen dazu. Gleiche Klassen werden durch den Stand aus der Datei ersetzt.</p>
-          <button class="primary" id="btnOpen">Datei öffnen …</button>
-          <input type="file" id="importFile" accept=".json,.txt,application/json,text/plain" hidden>
-          <details>
-            <summary>Text einfügen statt Datei</summary>
-            <section>
-              <textarea id="importBox" rows="2" placeholder="Kopierten Text hier einfügen" aria-label="Sitzplan-Daten einfügen"></textarea>
-              <button id="btnImport">Einlesen</button>
-            </section>
-          </details>
-        </section>
+
       </div>
 
       <div class="toast" id="toast" aria-live="polite"></div>
