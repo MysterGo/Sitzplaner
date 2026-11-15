@@ -141,8 +141,12 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .xic{width:40px;height:40px;border-radius:11px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex:none}
 .xt{display:flex;flex-direction:column;line-height:1.25}.xt strong{font-size:15px}.xt span{font-size:12.5px;color:var(--muted)}
 .xbody{display:flex;flex-direction:column;gap:10px;padding:12px}
-.nameopts{display:flex;flex-direction:column;gap:4px;background:var(--soft);border-radius:10px;padding:8px 10px}
-.nprev{margin:2px 0 0;font-weight:600;color:var(--accent)}
+.nameopts{display:flex;flex-direction:column;gap:6px;background:var(--accent-soft);border:1px solid #c9d8f0;border-radius:12px;padding:10px 12px}
+.nameopts[hidden]{display:none}
+.nopt-h{font-size:13px;color:var(--accent)}
+.nchips{display:flex;flex-wrap:wrap;gap:4px;max-height:132px;overflow:auto}
+.nchips span{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-size:13px;font-weight:600}
+.nchips span i{font-style:normal;color:var(--muted);font-weight:500}
 .stepper{display:flex;align-items:center;gap:6px}
 .stepper span{flex:1;font-weight:600}
 .stepper input{width:58px;text-align:center;font-weight:800;-moz-appearance:textfield;padding:6px}
@@ -699,12 +703,13 @@ Finja</textarea>
         <label class="hint" for="ncName">Name der Klasse</label>
         <input type="text" id="ncName" placeholder="z. B. 8a" autocomplete="off">
         <label class="hint" for="ncNames">Namen: einer pro Zeile, oder eine Spalte aus Excel hineinkopieren. Mit „(m)“, „(w)“ oder „(d)“ dahinter ist das Geschlecht gleich gesetzt.</label>
-<div class="nameopts">
-          <label class="check"><input type="checkbox" id="ncLast"> Nachname steht vorne (wie in Schullisten)</label>
-          <label class="check"><input type="checkbox" id="ncAbbr"> Nachnamen abkürzen (Datenschutz)</label>
-          <p class="hint nprev" id="ncPrev"></p>
-        </div>
         <textarea id="ncNames" rows="9" placeholder="Schmidt Mia (w)&#10;Becker Tom (m)&#10;…"></textarea>
+        <div class="nameopts" id="ncOpts" hidden>
+          <strong class="nopt-h">So werden die Namen gespeichert:</strong>
+          <div class="nchips" id="ncPrev"></div>
+          <label class="check"><input type="checkbox" id="ncAbbr"> Nachnamen abkürzen (Datenschutz)</label>
+          <label class="check"><input type="checkbox" id="ncLast"> Nachname steht vorne – Vor- und Nachname tauschen</label>
+        </div>
         <div class="row"><label class="hint grow" for="ncCsv">oder Liste laden (Excel als CSV, .txt):</label></div>
         <input type="file" id="ncCsv" accept=".csv,.txt,text/csv,text/plain">
         <p class="hint" id="ncCount">0 Namen</p>
@@ -724,12 +729,13 @@ Finja</textarea>
           <label class="hint" for="klassName">Name der Klasse</label>
           <input type="text" id="klassName">
           <label class="hint" for="newNames">Weitere Namen hinzufügen (einer pro Zeile, „(m)“/„(w)“/„(d)“ möglich):</label>
-          <div class="nameopts">
-          <label class="check"><input type="checkbox" id="adLast"> Nachname steht vorne (wie in Schullisten)</label>
+                    <textarea id="newNames" rows="4" placeholder="Schmidt Mia (w)&#10;Becker Tom (m)"></textarea>
+        <div class="nameopts" id="adOpts" hidden>
+          <strong class="nopt-h">So werden die Namen gespeichert:</strong>
+          <div class="nchips" id="adPrev"></div>
           <label class="check"><input type="checkbox" id="adAbbr"> Nachnamen abkürzen (Datenschutz)</label>
-          <p class="hint nprev" id="adPrev"></p>
+          <label class="check"><input type="checkbox" id="adLast"> Nachname steht vorne – Vor- und Nachname tauschen</label>
         </div>
-          <textarea id="newNames" rows="4" placeholder="Schmidt Mia (w)&#10;Becker Tom (m)"></textarea>
           <div class="row"><button id="btnAddNames">Hinzufügen</button><label class="hint" for="csvNames" style="flex:1">oder Liste laden (Excel als CSV, .txt):</label></div>
           <input type="file" id="csvNames" accept=".csv,.txt,text/csv,text/plain">
           <div class="studlist" id="studlist"></div>
@@ -1745,9 +1751,11 @@ $('viewL').onclick=()=>{S.flip=true;commit();};
 $('classTabs').onclick=e=>{const b=e.target.closest('[data-cls]');if(!b||b.dataset.cls===S.current)return;$('classSel').value=b.dataset.cls;$('classSel').onchange({target:$('classSel')});};
 $('btnAddClass').onclick=openNew;
 $('classSel').onchange=e=>{S.current=e.target.value;sel.clear();pending=null;pickKey=null;delConfirm=false;resetPick();commit();};
+function previewNames(txt){const o=nameOpts(),list=parseNames(txt).map(n=>mkStudent(n));if(!o.abbr)return list;
+  const tmp={students:list.map(x=>({...x}))};abbrClass(tmp);return tmp.students;}
 function namePrev(pre,ta){const o=nameOpts();$(pre+'Last').checked=o.lastFirst;$(pre+'Abbr').checked=o.abbr;
-  const first=parseNames($(ta).value)[0];if(!first){$(pre+'Prev').textContent=o.lastFirst?'Beispiel: „Schmidt Mia“ → „'+(o.abbr?'Mia S.':'Mia Schmidt')+'“':'Beispiel: „Mia Schmidt“ → „'+(o.abbr?'Mia S.':'Mia Schmidt')+'“';return;}
-  const raw=$(ta).value.split(/\r?\n/).find(l=>l.trim())||'';const st=mkStudent(first);const nm=o.abbr?abbrName(st.name,1):st.name;$(pre+'Prev').textContent=`Vorschau: „${raw.trim()}“ → „${nm}${st.g?' ('+st.g+')':''}“`;}
+  const v=$(ta).value.trim();$(pre+'Opts').hidden=!v;if(!v){$(pre+'Prev').innerHTML='';return;}
+  const list=previewNames(v);$(pre+'Prev').innerHTML=list.slice(0,60).map(x=>`<span>${esc(x.name)}${x.g?` <i>${x.g}</i>`:''}</span>`).join('')+(list.length>60?`<span>… +${list.length-60}</span>`:'');}
 [['nc','ncNames'],['ad','newNames']].forEach(([pre,ta])=>{
   $(pre+'Last').onchange=e=>{nameOpts().lastFirst=e.target.checked;save();namePrev('nc','ncNames');namePrev('ad','newNames');if(pre==='nc')ncUpd();};
   $(pre+'Abbr').onchange=e=>{nameOpts().abbr=e.target.checked;save();namePrev('nc','ncNames');namePrev('ad','newNames');};
@@ -1939,7 +1947,7 @@ function parseNames(txt,lastFirst){if(lastFirst===undefined)lastFirst=nameOpts()
   const hdr=rows!==null&&/name|schüler|schueler/.test(h);
   return rows.map(r=>{let c=r.filter(Boolean);const gi=c.findIndex(x=>gOf(x));let g=gi>=0?gOf(c[gi]):'';if(gi>=0)c.splice(gi,1);
     let n;if(c.length>=2){const sw=hdr?swap:lastFirst;n=sw?c[1]+' '+c[0]:c[0]+' '+c[1];}
-    else{n=c[0]||'';const m=n.match(GX);if(m){g=g||m[1].toLowerCase();n=n.replace(GX,'').trim();}if(lastFirst&&!hdr)n=flipName(n);}
+    else{n=c[0]||'';const m=n.match(GX);if(m){g=g||m[1].toLowerCase();n=n.replace(GX,'').trim();}if(n.includes(',')){const q=n.split(',');n=(q.slice(1).join(' ').trim()+' '+q[0].trim()).trim();}else if(lastFirst&&!hdr)n=flipName(n);}
     return n?(g?n+' ('+g+')':n):'';}).filter(Boolean);
 }
 $('csvNames').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const names=parseNames(r.result);if(!names.length){toast('In der Datei wurden keine Namen gefunden.');return;}const c=cur();addNames(c,names);commit();toast(`${names.length} Namen aus der Datei hinzugefügt.`);};r.readAsText(f);e.target.value='';};
