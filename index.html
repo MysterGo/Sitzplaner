@@ -42,6 +42,8 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px}
 .primary.big .ico{width:20px;height:20px}
 .plantools{position:absolute;top:8%;left:50%;transform:translateX(-50%);z-index:5;display:flex;gap:6px}
 .roomframe.flipped .plantools{top:auto;bottom:8%}
+.plantools{max-width:calc(100% - 16px);white-space:nowrap}
+@media (max-width:600px){.plantools{gap:4px;top:6%}.ptool{padding:5px 8px!important;font-size:13px;gap:4px!important}.ptool .ico{width:15px;height:15px}.plantools .inplan .pop{left:0;transform:none}}
 .roomframe.flipped .inplan .pop{top:auto;bottom:calc(100% + 8px)}
 button.primary.rnd{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 16px;font-size:16px;font-weight:800;border-radius:11px}
 .ptool{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:11px;padding:7px 11px;background:rgba(255,255,255,.94);box-shadow:0 6px 18px -10px rgba(20,35,70,.45);font-weight:700;color:var(--ink)}
@@ -394,15 +396,10 @@ details[open] summary{margin-bottom:10px}
         <div class="roomframe">
         <div class="plantools">
         <div class="lookwrap inplan">
-          <button class="ptool" id="btnLook" aria-haspopup="true" aria-expanded="false" aria-controls="lookPop"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5c0-4.1-4-7.6-9-7.6z"/><circle cx="7.5" cy="11" r="1.1" fill="currentColor" stroke="none"/><circle cx="10" cy="7" r="1.1" fill="currentColor" stroke="none"/><circle cx="14.5" cy="7" r="1.1" fill="currentColor" stroke="none"/></svg>Look<svg class="chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+          <button class="ptool" id="btnLook" aria-haspopup="true" aria-expanded="false" aria-controls="lookPop"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5c0-4.1-4-7.6-9-7.6z"/><circle cx="7.5" cy="11" r="1.1" fill="currentColor" stroke="none"/><circle cx="10" cy="7" r="1.1" fill="currentColor" stroke="none"/><circle cx="14.5" cy="7" r="1.1" fill="currentColor" stroke="none"/></svg>Aussehen<svg class="chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
           <div class="pop" id="lookPop" hidden>
-            <div class="poph">Ansicht</div>
-            <div class="seg small" role="group" aria-label="Perspektive">
-              <button id="viewS">Schülersicht</button>
-              <button id="viewL">Lehrersicht</button>
-            </div>
-            <div class="poph">Look</div>
-            <div class="looklist" role="group" aria-label="Look">
+            <div class="poph">Aussehen</div>
+            <div class="looklist" role="group" aria-label="Aussehen">
               <button data-look="modern"><span class="sw" style="background:linear-gradient(135deg,#f1dfbd 50%,#cfdcf0 50%)"></span>Modern</button>
               <button data-look="schlicht"><span class="sw" style="background:linear-gradient(135deg,#fff 50%,#222 50%)"></span>Schlicht</button>
               <button data-look="fach"><span class="sw" style="background:linear-gradient(135deg,#e8edf2 50%,#3d8a5c 50%)"></span>Fachraum</button>
@@ -412,6 +409,7 @@ details[open] summary{margin-bottom:10px}
             <button class="bonus" id="btnBonus" hidden title="Geheimes Bonus-Spiel">✦ Bonus-Spiel</button>
           </div>
         </div>
+          <button class="ptool" id="btnView" title="Ansicht wechseln" aria-label="Ansicht wechseln"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v16M7 20l-3-3M7 20l3-3"/><path d="M17 20V4M17 4l-3 3M17 4l3 3"/></svg><span id="viewTxt">Schüleransicht</span></button>
           <button class="ptool" id="btnPrintTop" title="Drucken" aria-label="Drucken"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg></button>
         </div>
         <div class="roomscroll" id="roomScroll">
@@ -1583,7 +1581,7 @@ function renderPanel(){
   $('gameCard').hidden=panel!=='spiel';document.querySelector('.card.room').hidden=panel==='spiel';if(panel==='spiel'&&typeof sizeGame==='function')sizeGame();
   document.querySelectorAll('[data-look]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.look===S.look)));
   document.querySelector('.roomframe').classList.toggle('flipped',!!S.flip);
-  $('viewS').setAttribute('aria-pressed',String(!S.flip));$('viewL').setAttribute('aria-pressed',String(S.flip));
+  $('viewTxt').textContent=S.flip?'Lehreransicht':'Schüleransicht';$('btnView').title=S.flip?'Zur Schüleransicht wechseln':'Zur Lehreransicht wechseln';
   const nS=c.students.length,nP=seatKeys(c).length;
   $('sideTitle').textContent=c.name;renderRules(c);if(typeof renderPrintMode==='function')renderPrintMode();
   const st=$('status');st.className='status'+(nS>nP?' warn':nS<nP?' free':'');
@@ -1752,8 +1750,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closePops();});
 $('btnPrintTop').onclick=()=>$('btnPrint').click();
 $('btnBonus').onclick=()=>{lookOpen(false);setPanel('spiel');};$('btnBackRoom').onclick=()=>setPanel('plan');
 document.querySelectorAll('[data-look]').forEach(b=>b.onclick=()=>{S.look=b.dataset.look;commit();});
-$('viewS').onclick=()=>{S.flip=false;commit();};
-$('viewL').onclick=()=>{S.flip=true;commit();};
+$('btnView').onclick=()=>{S.flip=!S.flip;commit();};
 $('classTabs').onclick=e=>{const b=e.target.closest('[data-cls]');if(!b||b.dataset.cls===S.current)return;$('classSel').value=b.dataset.cls;$('classSel').onchange({target:$('classSel')});};
 $('btnAddClass').onclick=openNew;
 $('classSel').onchange=e=>{S.current=e.target.value;sel.clear();pending=null;pickKey=null;delConfirm=false;resetPick();commit();};
@@ -1887,11 +1884,11 @@ function buildPrint(){
   clone.querySelectorAll('.seat-hit,.sel-outline,.marquee,.ring,.zoom,animate,animateTransform,[data-bonus]').forEach(n=>n.remove());
   // eigene IDs, damit Verläufe und Filter im Ausdruck greifen
   let xml=clone.outerHTML.replace(/id="([^"]+)"/g,'id="pr_$1"').replace(/url\(#([^)]+)\)/g,'url(#pr_$1)').replace(/href="#([^"]+)"/g,'href="#pr_$1"');
-  const d=new Date().toLocaleDateString('de-DE'),view=S.flip?'Lehrersicht':'Schülersicht';
+  const d=new Date().toLocaleDateString('de-DE'),view=S.flip?'Lehreransicht':'Schüleransicht';
   $('printSheet').innerHTML=`<div class="ph"><b>${esc(c.name)}</b><span>Sitzplan · ${view} · ${c.students.length} Schüler · ${d}</span></div>`+xml;
 }
 function renderPrintMode(){const m=S.printMode||'plain';document.querySelectorAll('[data-pm]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.pm===m)));
-  $('printModeHint').textContent=m==='plain'?'Weiß mit schwarzen Linien und gut lesbaren Namen. Spart Tinte.':`Im aktuellen Look „${({modern:'Modern',schlicht:'Schlicht',fach:'Fachraum',custom:'Eigene',disco:'Disco'})[S.look]||S.look}“. Braucht mehr Farbe.`;}
+  $('printModeHint').textContent=m==='plain'?'Weiß mit schwarzen Linien und gut lesbaren Namen. Spart Tinte.':`Im aktuellen Aussehen „${({modern:'Modern',schlicht:'Schlicht',fach:'Fachraum',custom:'Eigene',disco:'Disco'})[S.look]||S.look}“. Braucht mehr Farbe.`;}
 $('printMode').onclick=e=>{const b=e.target.closest('[data-pm]');if(!b)return;S.printMode=b.dataset.pm;save();renderPrintMode();};
 document.body.appendChild($('printSheet'));window.addEventListener('beforeprint',buildPrint);
 $('btnPrint').onclick=()=>{
