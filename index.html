@@ -237,6 +237,9 @@ section{display:flex;flex-direction:column;gap:9px}
 .studlist div{display:flex;justify-content:space-between;align-items:center;padding:5px 6px 5px 11px;border-bottom:1px solid #edf0f4}
 .studlist div:last-child{border-bottom:0}
 .studlist div span{flex:1;min-width:0}
+.nedit{flex:1;min-width:0;border:1px solid transparent!important;background:transparent!important;padding:3px 6px!important;margin-left:-6px;border-radius:7px!important;font:inherit;color:inherit}
+.nedit:hover{border-color:var(--line)!important}
+.nedit:focus{border-color:var(--accent)!important;background:var(--surface)!important;outline:none}
 .gbtn{min-width:40px;padding:2px 8px!important;margin-right:4px;border-radius:999px!important;font-size:12.5px!important;font-weight:800;border:1px solid var(--line)!important;color:var(--muted)!important;background:var(--surface)!important}
 .gbtn.g-m{background:#e4ecf8!important;border-color:#b8cbea!important;color:#2a5cad!important}
 .gbtn.g-d{background:#efe9f8!important;border-color:#d3c5ea!important;color:#6b4fa0!important}
@@ -555,7 +558,7 @@ Finja</textarea>
         </section>
         <details class="fold" id="foldList">
           <summary>Klassenliste <span class="cnt" id="listCnt"></span></summary>
-          <p class="hint">Geschlecht antippen zum Wechseln: m → w → d. „d“ zählt bei „m/w im Wechsel“ nicht und kann überall sitzen.</p>
+          <p class="hint">Namen antippen zum Ändern. Geschlecht antippen zum Wechseln: m → w → d („d“ zählt bei „m/w im Wechsel“ nicht).</p>
           <div class="studlist" id="studlist2"></div>
           <div class="listact"><button class="link" data-panel="klasse">Namen bearbeiten …</button><button class="link danger" id="btnClearList">Liste löschen</button></div>
           <div class="confirmbox" id="clearAsk" hidden><strong id="clearAskTxt"></strong><span class="hint">Tische und Look bleiben, alle Namen, Plätze und Regeln dieser Klasse sind danach weg.</span><div class="row"><button class="danger-btn" id="clearYes">Ja, alle löschen</button><button id="clearNo">Abbrechen</button></div></div>
@@ -1626,12 +1629,13 @@ function renderPanel(){
   $('expClasses').innerHTML=S.classes.map(k=>`<label><input type="checkbox" data-cid="${k.id}"${expOff.has(k.id)?'':' checked'}>${esc(k.name)}<small>${k.students.length} Schüler</small></label>`).join('');
   $('backupInfo').textContent=S.lastBackup?`Letzte Sicherung: ${new Date(S.lastBackup).toLocaleDateString('de-DE')}`:'Noch keine Sicherung gemacht.';
   const gLbl=g=>g==='m'?'männlich':g==='w'?'weiblich':g==='d'?'divers':'nicht gesetzt';
+  const nIn=s=>`<input class="nedit" data-ren="${s.id}" value="${esc(s.name)}" aria-label="Name ändern" spellcheck="false" autocomplete="off">`;
   const gBtn=s=>`<button class="gbtn g-${s.g||'x'}" data-g="${s.id}" title="Geschlecht antippen zum Wechseln: m → w → d" aria-label="Geschlecht von ${esc(s.name)}: ${gLbl(s.g)}">${s.g||'m/w/d'}</button>`;
   const sorted=[...c.students].sort((a,b)=>a.name.localeCompare(b.name,'de'));
   if(panel==='klasse'&&document.activeElement!==$('newNames'))namePrev('ad','newNames');
-  $('studlist2').innerHTML=c.students.length?sorted.map(s=>`<div><span>${esc(s.name)}</span>${gBtn(s)}</div>`).join(''):'<div><span class="hint">Noch keine Namen.</span></div>';
+  $('studlist2').innerHTML=c.students.length?sorted.map(s=>`<div>${nIn(s)}${gBtn(s)}</div>`).join(''):'<div><span class="hint">Noch keine Namen.</span></div>';
   $('listCnt').textContent=c.students.length||'';
-  $('studlist').innerHTML=c.students.length?[...c.students].sort((a,b)=>a.name.localeCompare(b.name,'de')).map(s=>`<div><span>${esc(s.name)}</span>${gBtn(s)}<button data-del="${s.id}" aria-label="${esc(s.name)} entfernen">×</button></div>`).join(''):'<div><span class="hint">Noch keine Namen.</span></div>';
+  $('studlist').innerHTML=c.students.length?[...c.students].sort((a,b)=>a.name.localeCompare(b.name,'de')).map(s=>`<div>${nIn(s)}${gBtn(s)}<button data-del="${s.id}" aria-label="${esc(s.name)} entfernen">×</button></div>`).join(''):'<div><span class="hint">Noch keine Namen.</span></div>';
   const trashIc='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 12.5h9l1-12.5M10 11v5.5M14 11v5.5"/></svg>';
   $('classList').innerHTML=S.classes.map(k=>{
     if(delAsk===k.id)return `<div class="citem ask"><span class="grow">„${esc(k.name)}“ mit allen Namen und Plänen löschen?</span><button class="danger" data-cdel-yes="${k.id}">Löschen</button><button data-cdel-no="1">Abbrechen</button></div>`;
@@ -1785,6 +1789,11 @@ $('btnNewClass2').onclick=openNew;
 $('klassName').oninput=e=>{cur().name=e.target.value||'Ohne Namen';save();renderRoom();$('sideTitle').textContent=cur().name;const o=$('classSel').selectedOptions[0];if(o)o.textContent=cur().name;const t=document.querySelector(`[data-cls="${cur().id}"]`);if(t)t.textContent=cur().name;};
 $('btnAddNames').onclick=()=>{const c=cur(),names=$('newNames').value.split(/[\n;]+/).map(s=>s.trim()).filter(Boolean);
   if(!names.length){toast('Keine Namen gefunden.');return;}addNames(c,names);$('newNames').value='';commit();toast(`${names.length} Namen hinzugefügt.`);};
+function renameFrom(e){const el=e.target.closest('[data-ren]');if(!el)return;const c=cur(),st=student(c,el.dataset.ren);if(!st)return;const v=el.value.replace(/\s+/g,' ').trim();
+  if(!v){el.value=st.name;toast('Ein Name darf nicht leer sein.');return;}if(v===st.name)return;
+  if(c.students.some(x=>x.id!==st.id&&x.name===v)){el.value=st.name;toast(`„${v}“ gibt es in dieser Klasse schon.`);return;}
+  const old=st.name;st.name=v;commit();toast(`„${old}“ heißt jetzt „${v}“.`);}
+['studlist','studlist2'].forEach(id=>{$(id).addEventListener('change',renameFrom);$(id).addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('[data-ren]')){e.preventDefault();e.target.blur();}if(e.key==='Escape'&&e.target.matches('[data-ren]')){const st=student(cur(),e.target.dataset.ren);if(st)e.target.value=st.name;e.target.blur();}});});
 function gCycle(st){st.g=!st.g?'m':st.g==='m'?'w':st.g==='w'?'d':undefined;if(!st.g)delete st.g;}
 $('btnClearList').onclick=()=>{const c=cur();if(!c.students.length){toast('Die Liste ist schon leer.');return;}$('clearAskTxt').textContent=`Wirklich alle ${c.students.length} Namen aus „${c.name}“ löschen?`;$('clearAsk').hidden=false;};
 $('clearNo').onclick=()=>{$('clearAsk').hidden=true;};
