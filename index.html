@@ -31,6 +31,33 @@ html,body{background:var(--bg);color:var(--ink)}
 body{font-family:var(--font-ui);font-size:15px;line-height:1.45}
 .app{max-width:1280px;margin:0 auto;padding-block:14px 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
 header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px}
+.classbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 4px}
+.ctabs{display:flex;gap:6px;overflow-x:auto;max-width:100%;scrollbar-width:thin;padding-bottom:2px}
+.ctab{border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:9px 16px;font-weight:800;font-size:16px;white-space:nowrap;color:var(--ink)}
+.ctab[aria-selected=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.ctab.add{padding:9px 13px;color:var(--accent);font-size:18px;line-height:1}
+.ctab.edit{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:14px;color:var(--muted);border-color:transparent;background:none}
+.ctab.edit[aria-pressed=true]{color:var(--accent);background:var(--accent-soft)}
+.primary.big{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;font-size:16px;font-weight:800;border-radius:12px}
+.primary.big .ico{width:20px;height:20px}
+.plantools{position:absolute;top:10px;right:10px;z-index:5;display:flex;gap:6px}
+.ptool{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:11px;padding:7px 11px;background:rgba(255,255,255,.94);box-shadow:0 6px 18px -10px rgba(20,35,70,.45);font-weight:700;color:var(--ink)}
+.inplan .pop{left:auto;right:0}
+.pop.menu{width:220px;gap:2px;padding:6px}
+.pop.menu button{display:flex;align-items:center;gap:9px;border:0;border-radius:9px;padding:9px 10px;background:none;text-align:left;font-weight:600;color:var(--ink)}
+.pop.menu button:hover{background:var(--soft)}
+.pop.menu button[aria-pressed=true]{background:var(--accent-soft);color:var(--accent)}
+#btnMore{display:inline-flex;align-items:center;gap:6px}
+#btnMore[aria-expanded=true],#btnMore.on{background:var(--accent-soft);color:var(--accent)}
+details.fold{border-top:1px solid var(--line);padding-top:10px}
+details.fold>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:2px 0}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary::before{content:'';width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .15s;margin-right:2px}
+details.fold[open]>summary::before{transform:rotate(45deg)}
+details.fold[open]{display:flex;flex-direction:column;gap:10px}
+details.fold .cnt{background:var(--accent);color:#fff;border-radius:999px;font-size:11px;padding:1px 7px;letter-spacing:0}
+details.fold .cnt:empty{display:none}
+#roster.allin{min-height:0;border-style:solid;padding:6px 10px}
 h1{font-size:22px;font-weight:800;margin:0;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
 h1 .logo{width:30px;height:30px;border-radius:8px;background:var(--accent);display:grid;place-items:center}
 .grow{flex:1}
@@ -69,13 +96,13 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .layout{display:flex;gap:16px;align-items:flex-start;justify-content:center}
 .roomcol{flex:0 1 auto;min-width:0;max-width:100%}
 .side{flex:0 0 350px;width:350px;box-sizing:border-box;position:sticky;top:max(12px,env(safe-area-inset-top,0px));max-height:calc(100vh - 24px);overflow:auto}
-@media (max-width:980px){.layout{flex-direction:column;align-items:stretch}.side{flex:none;width:auto;position:static;max-height:none}.roomcol{display:contents!important}.roomcol>.nav{order:0}.layout>.side{order:1}.roomcol>.card{order:2}}
+@media (max-width:980px){.layout{flex-direction:column;align-items:stretch}.side{flex:none;width:auto;position:static;max-height:none}.roomcol{width:100%}}
 .card{background:var(--surface);border-radius:16px;padding:14px;box-shadow:0 1px 2px rgba(20,40,70,.06),0 14px 34px -20px rgba(20,40,70,.3);min-width:0;display:flex;flex-direction:column;gap:12px}
 .room{align-items:center}
 .roombar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;width:100%;background:var(--surface);padding-block:0 10px}
 .roomcol{display:flex;flex-direction:column;gap:10px}
 .roomscroll{overflow:auto;max-width:100%;border-radius:8px}
-@media (max-width:600px){.roombar{padding-bottom:8px}.roombar .seg{gap:1px}.roombar .seg.small{flex-wrap:nowrap;overflow-x:auto;max-width:100%;box-sizing:border-box}.roombar .seg.small button{padding:5px 5px;font-size:12.5px;white-space:nowrap}.roombar .seglabel{display:none}.gw .overlay{overflow:auto;place-items:start center;padding-block:8px}.gw .overlay>*{font-size:14px}.zoom{top:6px;right:6px;transform:scale(.78);transform-origin:top right}}
+@media (max-width:600px){.primary.big{padding:9px 14px;font-size:15px}.ctab{padding:8px 13px;font-size:15px}.ptool{padding:6px 9px}.roombar{padding-bottom:8px}.roombar .seg{gap:1px}.roombar .seg.small{flex-wrap:nowrap;overflow-x:auto;max-width:100%;box-sizing:border-box}.roombar .seg.small button{padding:5px 5px;font-size:12.5px;white-space:nowrap}.roombar .seglabel{display:none}.gw .overlay{overflow:auto;place-items:start center;padding-block:8px}.gw .overlay>*{font-size:14px}.zoom{top:6px;right:6px;transform:scale(.78);transform-origin:top right}}
 .roomframe{position:relative;max-width:100%}
 .zoom{position:absolute;top:10px;right:10px;z-index:3;display:inline-flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:11px;padding:3px;background:rgba(255,255,255,.92);box-shadow:0 4px 14px -6px rgba(20,40,70,.35)}
 .seg.small button{padding:5px 10px;font-size:13px}
@@ -269,39 +296,30 @@ details[open] summary{margin-bottom:10px}
 <div class="app">
   <header>
     <h1><span class="logo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18"><rect x="1" y="2" width="16" height="3" rx="1" fill="#fff"/><rect x="2" y="8" width="6" height="3" rx="1" fill="#f3e2c4"/><rect x="10" y="8" width="6" height="3" rx="1" fill="#f3e2c4"/><rect x="2" y="13" width="6" height="3" rx="1" fill="#f3e2c4"/><rect x="10" y="13" width="6" height="3" rx="1" fill="#f3e2c4"/></svg></span>Der Sitzplaner</h1>
-    <div class="row" style="gap:6px">
-      <select id="classSel" aria-label="Klasse wählen"></select>
-      <button id="btnKlasse" data-panel="klasse"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor" stroke="none"/></svg>Klassen</button>
-    </div>
   </header>
+  <div class="classbar">
+    <select id="classSel" aria-label="Klasse wählen" hidden></select>
+    <div class="ctabs" id="classTabs" role="tablist" aria-label="Klassen"></div>
+    <button class="ctab add" id="btnAddClass" title="Neue Klasse anlegen" aria-label="Neue Klasse anlegen">+</button>
+    <button class="ctab edit" id="btnKlasse" data-panel="klasse" title="Klassen und Namen bearbeiten"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>Bearbeiten</button>
+    <span class="grow"></span>
+<button class="primary big" id="btnRandom"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="8.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg>Zufällig verteilen</button>
+  </div>
 
   <div class="layout" id="layout">
     <div class="roomcol" id="roomCol">
       <nav class="seg nav" aria-label="Bereiche">
         <button data-panel="tische"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M3 12h18M9.5 5.5 12 3l2.5 2.5M9.5 18.5 12 21l2.5-2.5M5.5 9.5 3 12l2.5 2.5M18.5 9.5 21 12l-2.5 2.5"/></svg>Tischordnung</button>
-        <button data-panel="plan"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="3" rx="1"/><rect x="4" y="10" width="6" height="4" rx="1"/><rect x="14" y="10" width="6" height="4" rx="1"/><rect x="4" y="17" width="6" height="4" rx="1"/><rect x="14" y="17" width="6" height="4" rx="1"/></svg>Schüler:innen verteilen</button>
-        <div class="lookwrap">
-          <button id="btnLook" aria-haspopup="true" aria-expanded="false" aria-controls="lookPop"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5c0-4.1-4-7.6-9-7.6z"/><circle cx="7.5" cy="11" r="1.1" fill="currentColor" stroke="none"/><circle cx="10" cy="7" r="1.1" fill="currentColor" stroke="none"/><circle cx="14.5" cy="7" r="1.1" fill="currentColor" stroke="none"/></svg>Look<svg class="chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
-          <div class="pop" id="lookPop" hidden>
-            <div class="poph">Ansicht</div>
-            <div class="seg small" role="group" aria-label="Perspektive">
-              <button id="viewS">Schülersicht</button>
-              <button id="viewL">Lehrersicht</button>
-            </div>
-            <div class="poph">Look</div>
-            <div class="looklist" role="group" aria-label="Look">
-              <button data-look="modern"><span class="sw" style="background:linear-gradient(135deg,#f1dfbd 50%,#cfdcf0 50%)"></span>Modern</button>
-              <button data-look="schlicht"><span class="sw" style="background:linear-gradient(135deg,#fff 50%,#222 50%)"></span>Schlicht</button>
-              <button data-look="fach"><span class="sw" style="background:linear-gradient(135deg,#e8edf2 50%,#3d8a5c 50%)"></span>Fachraum</button>
-              <button data-look="custom"><span class="sw" style="background:conic-gradient(#e94e4e,#f2b632,#4cb050,#3d8fd9,#9d6bff,#e94e4e)"></span>Eigene</button>
-              <button data-look="disco"><span class="sw" style="background:linear-gradient(135deg,#ff2bd6,#3b1a7a 55%,#00e5ff)"></span>Disco</button>
-            </div>
-            <button class="bonus" id="btnBonus" hidden title="Geheimes Bonus-Spiel">✦ Bonus-Spiel</button>
+        <button data-panel="plan"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="3" rx="1"/><rect x="4" y="10" width="6" height="4" rx="1"/><rect x="14" y="10" width="6" height="4" rx="1"/><rect x="4" y="17" width="6" height="4" rx="1"/><rect x="14" y="17" width="6" height="4" rx="1"/></svg>Verteilen</button>
+
+        <button data-panel="lose"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="11" height="11" rx="2.5"/><circle cx="6.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="10.5" cy="10.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="17" cy="13" r="2.3"/><path d="M12.5 21c0-2.6 2-4.6 4.5-4.6s4.5 2 4.5 4.6"/></svg>Losen &amp; Gruppen</button>
+        <div class="lookwrap morewrap">
+          <button id="btnMore" aria-haspopup="true" aria-expanded="false" aria-controls="morePop">Mehr<svg class="chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+          <div class="pop menu" id="morePop" hidden>
+            <button data-panel="spiel"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 3 3 10.5l7 2.5 2.5 7z"/><path d="M21 3 10 13"/></svg>Minispiel</button>
+            <button data-panel="export"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></svg>Export &amp; Drucken</button>
           </div>
         </div>
-        <button data-panel="lose"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="11" height="11" rx="2.5"/><circle cx="6.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="10.5" cy="10.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="17" cy="13" r="2.3"/><path d="M12.5 21c0-2.6 2-4.6 4.5-4.6s4.5 2 4.5 4.6"/></svg>Losen &amp; Gruppen</button>
-        <button data-panel="spiel"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 3 3 10.5l7 2.5 2.5 7z"/><path d="M21 3 10 13"/></svg>Minispiel</button>
-        <button data-panel="export"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></svg>Export</button>
       </nav>
       <div class="card room">
         <div class="custom" id="customPanel" hidden>
@@ -329,11 +347,27 @@ details[open] summary{margin-bottom:10px}
           </div>
         </div>
         <div class="roomframe">
-        <div class="zoom" role="group" aria-label="Zoom">
-          <button id="zoomOut" aria-label="Verkleinern">−</button>
-          <output id="zoomVal">100 %</output>
-          <button id="zoomIn" aria-label="Vergrößern">+</button>
-          <button id="zoomFit" aria-label="Ganzen Raum zeigen" title="Ganzen Raum zeigen"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+        <div class="plantools">
+        <div class="lookwrap inplan">
+          <button class="ptool" id="btnLook" aria-haspopup="true" aria-expanded="false" aria-controls="lookPop"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5c0-4.1-4-7.6-9-7.6z"/><circle cx="7.5" cy="11" r="1.1" fill="currentColor" stroke="none"/><circle cx="10" cy="7" r="1.1" fill="currentColor" stroke="none"/><circle cx="14.5" cy="7" r="1.1" fill="currentColor" stroke="none"/></svg>Look<svg class="chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+          <div class="pop" id="lookPop" hidden>
+            <div class="poph">Ansicht</div>
+            <div class="seg small" role="group" aria-label="Perspektive">
+              <button id="viewS">Schülersicht</button>
+              <button id="viewL">Lehrersicht</button>
+            </div>
+            <div class="poph">Look</div>
+            <div class="looklist" role="group" aria-label="Look">
+              <button data-look="modern"><span class="sw" style="background:linear-gradient(135deg,#f1dfbd 50%,#cfdcf0 50%)"></span>Modern</button>
+              <button data-look="schlicht"><span class="sw" style="background:linear-gradient(135deg,#fff 50%,#222 50%)"></span>Schlicht</button>
+              <button data-look="fach"><span class="sw" style="background:linear-gradient(135deg,#e8edf2 50%,#3d8a5c 50%)"></span>Fachraum</button>
+              <button data-look="custom"><span class="sw" style="background:conic-gradient(#e94e4e,#f2b632,#4cb050,#3d8fd9,#9d6bff,#e94e4e)"></span>Eigene</button>
+              <button data-look="disco"><span class="sw" style="background:linear-gradient(135deg,#ff2bd6,#3b1a7a 55%,#00e5ff)"></span>Disco</button>
+            </div>
+            <button class="bonus" id="btnBonus" hidden title="Geheimes Bonus-Spiel">✦ Bonus-Spiel</button>
+          </div>
+        </div>
+          <button class="ptool" id="btnPrintTop" title="Drucken" aria-label="Drucken"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/></svg></button>
         </div>
         <div class="roomscroll" id="roomScroll">
         <svg id="room" viewBox="0 0 1090 1308" aria-label="Klassenraum mit Tischen">
@@ -464,7 +498,6 @@ Finja</textarea>
         <h2 id="sideTitle">Klasse</h2>
         <div class="status" id="status"></div>
         <div class="row">
-          <button class="primary" id="btnRandom">Zufällig verteilen</button>
           <button id="btnClear">Abräumen</button>
         </div>
         <button id="btnUndoRandom" hidden>↶ Vorherige Verteilung</button>
@@ -473,22 +506,22 @@ Finja</textarea>
         <section>
           <h3 id="rosterTitle">Noch ohne Platz</h3>
           <div id="roster" aria-label="Schüler ohne Platz"></div>
-          <p class="hint">Namen auf einen Platz ziehen, oder antippen und dann den Platz. Ein Name im Plan antippen fixiert ihn für den Zufall.</p>
+          <p class="hint">Namen auf einen Platz ziehen. Antippen im Plan fixiert ihn.</p>
         </section>
-        <section>
-          <h3>Regeln für den Zufall</h3>
+        <details class="fold" id="foldRules">
+          <summary>Regeln für den Zufall <span class="cnt" id="ruleCnt"></span></summary>
           <div class="rules" id="ruleList"></div>
           <div class="rulerow"><select id="ruleA" aria-label="Schüler A"></select><span>nicht neben</span><select id="ruleB" aria-label="Schüler B"></select><button id="ruleAddApart" aria-label="Regel hinzufügen">+</button></div>
           <div class="rulerow"><select id="ruleF" aria-label="Schüler"></select><button id="ruleAddFront">muss nach vorne</button></div>
           <label class="altrow" id="altRow"><input type="checkbox" id="ruleAlt"> m/w im Wechsel <span class="hint" id="altInfo"></span></label>
           <button class="link" id="btnSetG" style="align-self:flex-start">Geschlecht festlegen …</button>
-          <p class="hint">Gilt beim zufälligen Verteilen. „Vorne“ ist die Reihe an der Tafel, „nebeneinander“ heißt am selben Tisch oder am Tisch direkt daneben.</p>
-        </section>
-        <section>
-          <h3>Favoriten</h3>
+          <p class="hint">„Vorne“ = Reihe an der Tafel. „Nebeneinander“ = gleicher oder direkt benachbarter Tisch.</p>
+        </details>
+        <details class="fold">
+          <summary>Favoriten</summary>
           <div class="favs" id="favs"></div>
-          <p class="hint">Zwei gelungene Sitzordnungen merken, jeweils mit Tischordnung und allen Namen auf ihren Plätzen. Mit „Laden“ kommt sie jederzeit zurück.</p>
-        </section>
+          <p class="hint">Gute Sitzordnungen merken und später wieder laden.</p>
+        </details>
       </div>
 
       <div class="pane" id="pane-tische" hidden>
@@ -702,7 +735,7 @@ let S,panel='plan',mode='schueler',pending=null,delConfirm=false,sel=new Set(),p
 
 /* ---------- Daten ---------- */
 function makeClass(name,names,nDouble,nSingle,tpl){
-  const c={id:uid(),name,students:names.map(n=>({id:uid(),name:n})),tables:[],seats:{},locked:[],template:tpl||'bloecke',picked:[],groups:[],gsize:4,favs:[null,null]};
+  const c={id:uid(),name,students:names.map(n=>({id:uid(),name:n})),tables:[],seats:{},locked:[],template:tpl||'bloecke',picked:[],groups:[],gsize:4,favs:[null,null],rules:{apart:[],front:[],alt:false}};
   for(let i=0;i<nDouble;i++)c.tables.push({id:uid(),type:'double',x:0,y:0,r:0});
   for(let i=0;i<nSingle;i++)c.tables.push({id:uid(),type:'single',x:0,y:0,r:0});
   applyTemplate(c,c.template);
@@ -909,6 +942,7 @@ function renderRules(c){
   const nm=id=>esc((student(c,id)||{}).name||'?');
   const nM=c.students.filter(s=>s.g==='m').length,nW=c.students.filter(s=>s.g==='w').length,nX=c.students.length-nM-nW;
   $('ruleAlt').checked=!!c.rules.alt;
+  {const nr=c.rules.apart.length+c.rules.front.length+(c.rules.alt?1:0);$('ruleCnt').textContent=nr?String(nr):'';}
   const ab=c.rules.alt?altBreaks(c,c.seats,geo):0;
   $('altInfo').textContent=`(${nM} m · ${nW} w${nX?` · ${nX} ohne Angabe`:''})`+(c.rules.alt&&ab?` – ${ab}× sitzen gleiche nebeneinander`:'');
   $('altRow').classList.toggle('bad',!!(c.rules.alt&&ab>altMin(c,geo)));
@@ -1408,10 +1442,9 @@ function renderRoom(anim){
 }
 function availW(){const lay=$('layout'),side=$('side'),stacked=window.matchMedia('(max-width:980px)').matches;return Math.max(240,(stacked?lay.clientWidth:lay.clientWidth-side.offsetWidth-16)-28);}
 function sizeRoom(){
-  const c=cur(),svg=$('room'),aw=availW(),k=aw/c.room.w*(S.zoom||1);
+  const c=cur(),svg=$('room'),aw=availW(),k=aw/c.room.w;
   svg.style.width=Math.floor(c.room.w*k)+'px';svg.style.height=Math.floor(c.room.h*k)+'px';
   $('roomScroll').style.width=Math.min(aw,Math.floor(c.room.w*k))+'px';
-  $('zoomVal').textContent=Math.round((S.zoom||1)*100)+' %';
 }
 function setZoom(z){S.zoom=clamp(Math.round(z*20)/20,0.4,2.5);save();sizeRoom();}
 window.addEventListener('resize',()=>sizeRoom());
@@ -1432,6 +1465,8 @@ function thumb(id){
 /* ---------- Seitenfeld ---------- */
 function renderPanel(){
   const c=cur();
+  $('classTabs').innerHTML=S.classes.map(k=>`<button class="ctab" role="tab" data-cls="${k.id}" aria-selected="${k.id===c.id}">${esc(k.name)}</button>`).join('');
+  $('btnMore').classList.toggle('on',panel==='spiel'||panel==='export');
   $('classSel').innerHTML=S.classes.map(k=>`<option value="${k.id}"${k.id===c.id?' selected':''}>${esc(k.name)}</option>`).join('');
   document.querySelectorAll('[data-panel]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.panel===panel)));
   document.querySelectorAll('#side > .pane').forEach(p=>{p.hidden=p.id!=='pane-'+panel;});
@@ -1459,7 +1494,7 @@ function renderPanel(){
   $('btnFit').disabled=!nS||nS===nP;$('btnFit').title=nS===nP?'Die Zahl der Plätze passt schon.':`Auf ${nS} Plätze ändern`;
   const seated=new Set(Object.values(c.seats)),un=c.students.filter(s=>!seated.has(s.id)).sort((a,b)=>a.name.localeCompare(b.name,'de'));
   if(pending&&!un.find(s=>s.id===pending))pending=null;
-  $('rosterTitle').textContent=`Noch ohne Platz (${un.length})`;
+  $('rosterTitle').textContent=`Noch ohne Platz (${un.length})`;$('roster').classList.toggle('allin',!!nS&&!un.length);
   $('roster').innerHTML=!nS?'<span class="empty">Noch keine Namen. Oben unter „Klassen“ eintragen.</span>':un.length?un.map(s=>`<span class="chip${pending===s.id?' pending':''}" data-sid="${s.id}">${esc(s.name)}</span>`).join(''):'<span class="empty">Alle sitzen. Zum Entfernen einen Namen hierher ziehen.</span>';
   if(document.activeElement!==$('nSingle'))$('nSingle').value=c.tables.filter(t=>t.type==='single').length;
   if(document.activeElement!==$('nDouble'))$('nDouble').value=c.tables.filter(t=>t.type==='double').length;
@@ -1588,19 +1623,21 @@ $('ruleAddFront').onclick=()=>{const c=cur(),f=$('ruleF').value;if(!f){toast('Bi
 $('ruleAlt').onchange=e=>{const c=cur();c.rules.alt=e.target.checked;if(c.rules.alt&&!c.students.some(s=>s.g))toast('Lege zuerst bei „Klassen“ fest, wer m und wer w ist.');commit();};
 $('btnSetG').onclick=()=>setPanel('klasse');
 $('ruleList').onclick=e=>{const b=e.target.closest('[data-rdel]');if(!b)return;const c=cur(),k=b.dataset.rdel,i=+k.slice(1);if(k[0]==='a')c.rules.apart.splice(i,1);else c.rules.front.splice(i,1);commit();};
-function placePop(){const p=$('lookPop');p.style.left='0px';const r=p.getBoundingClientRect(),vw=document.documentElement.clientWidth;if(r.right>vw-12)p.style.left=Math.round(vw-12-r.right)+'px';}
-function lookOpen(o){$('lookPop').hidden=!o;$('btnLook').setAttribute('aria-expanded',String(o));if(o)placePop();}
+function popToggle(btn,pop,o){if(o)closePops();$(pop).hidden=!o;$(btn).setAttribute('aria-expanded',String(o));}
+function closePops(){[['btnLook','lookPop'],['btnMore','morePop']].forEach(([b,p])=>{$(p).hidden=true;$(b).setAttribute('aria-expanded','false');});}
+function lookOpen(o){popToggle('btnLook','lookPop',o);}
 $('btnLook').onclick=e=>{e.stopPropagation();lookOpen($('lookPop').hidden);};
-document.addEventListener('click',e=>{if(!$('lookPop').hidden&&!e.target.closest('.lookwrap'))lookOpen(false);});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('lookPop').hidden){lookOpen(false);$('btnLook').focus();}});
+$('btnMore').onclick=e=>{e.stopPropagation();popToggle('btnMore','morePop',$('morePop').hidden);};
+$('morePop').addEventListener('click',e=>{if(e.target.closest('[data-panel]'))closePops();});
+document.addEventListener('click',e=>{if(!e.target.closest('.lookwrap'))closePops();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePops();});
+$('btnPrintTop').onclick=()=>$('btnPrint').click();
 $('btnBonus').onclick=()=>{lookOpen(false);setPanel('spiel');};$('btnBackRoom').onclick=()=>setPanel('plan');
 document.querySelectorAll('[data-look]').forEach(b=>b.onclick=()=>{S.look=b.dataset.look;commit();});
-$('zoomIn').onclick=()=>setZoom((S.zoom||1)+0.1);
-$('zoomOut').onclick=()=>setZoom((S.zoom||1)-0.1);
-$('zoomFit').onclick=()=>{const c=cur(),base=availW()/c.room.w;setZoom(Math.min(1,(window.innerHeight-200)/(c.room.h*base)));};
-$('roomScroll').addEventListener('wheel',e=>{if(!e.ctrlKey&&!e.metaKey)return;e.preventDefault();setZoom((S.zoom||1)*(e.deltaY<0?1.08:0.93));},{passive:false});
 $('viewS').onclick=()=>{S.flip=false;commit();};
 $('viewL').onclick=()=>{S.flip=true;commit();};
+$('classTabs').onclick=e=>{const b=e.target.closest('[data-cls]');if(!b||b.dataset.cls===S.current)return;$('classSel').value=b.dataset.cls;$('classSel').onchange({target:$('classSel')});};
+$('btnAddClass').onclick=()=>{setPanel('klasse');setTimeout(()=>{const i=$('newClassName');i.scrollIntoView({block:'center',behavior:'smooth'});i.focus();},60);};
 $('classSel').onchange=e=>{S.current=e.target.value;sel.clear();pending=null;pickKey=null;delConfirm=false;resetPick();commit();};
 function newClass(){
   const n=$('newClassName').value.trim();if(!n){toast('Bitte zuerst einen Namen für die Klasse eingeben.');$('newClassName').focus();return;}
@@ -1609,7 +1646,7 @@ function newClass(){
 }
 $('btnNewClass').onclick=newClass;
 $('newClassName').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();newClass();}});
-$('klassName').oninput=e=>{cur().name=e.target.value||'Ohne Namen';save();renderRoom();$('sideTitle').textContent=cur().name;const o=$('classSel').selectedOptions[0];if(o)o.textContent=cur().name;};
+$('klassName').oninput=e=>{cur().name=e.target.value||'Ohne Namen';save();renderRoom();$('sideTitle').textContent=cur().name;const o=$('classSel').selectedOptions[0];if(o)o.textContent=cur().name;const t=document.querySelector(`[data-cls="${cur().id}"]`);if(t)t.textContent=cur().name;};
 $('btnAddNames').onclick=()=>{const c=cur(),names=$('newNames').value.split(/[\n;]+/).map(s=>s.trim()).filter(Boolean);
   if(!names.length){toast('Keine Namen gefunden.');return;}names.forEach(n=>c.students.push(mkStudent(n)));$('newNames').value='';commit();toast(`${names.length} Namen hinzugefügt.`);};
 $('studlist').onclick=e=>{const gb=e.target.closest('[data-g]');if(gb){const st=student(cur(),gb.dataset.g);if(st){st.g=!st.g?'m':st.g==='m'?'w':undefined;if(!st.g)delete st.g;commit();}return;}const b=e.target.closest('[data-del]');if(!b)return;const c=cur(),id=b.dataset.del;c.students=c.students.filter(s=>s.id!==id);const k=seatOf(c,id);if(k)delete c.seats[k];clean(c);commit();};
