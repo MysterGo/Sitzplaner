@@ -696,7 +696,7 @@ Finja</textarea>
         <h2>Neue Klasse</h2>
         <label class="hint" for="ncName">Name der Klasse</label>
         <input type="text" id="ncName" placeholder="z. B. 8a" autocomplete="off">
-        <label class="hint" for="ncNames">Namen: einer pro Zeile, oder eine Spalte aus Excel hineinkopieren. Mit „(m)“, „(w)“ oder „(d)“ dahinter ist das Geschlecht gleich gesetzt.</label>
+        <label class="hint" for="ncNames">Namen: einer pro Zeile, oder eine Spalte aus Excel hineinkopieren. Nachnamen werden automatisch auf den ersten Buchstaben gekürzt (Datenschutz). Mit „(m)“, „(w)“ oder „(d)“ dahinter ist das Geschlecht gleich gesetzt.</label>
         <textarea id="ncNames" rows="9" placeholder="Mia Schmidt (w)&#10;Tom Becker (m)&#10;…"></textarea>
         <div class="row"><label class="hint grow" for="ncCsv">oder Liste laden (Excel als CSV, .txt):</label></div>
         <input type="file" id="ncCsv" accept=".csv,.txt,text/csv,text/plain">
@@ -814,8 +814,8 @@ const OLD_SAMPLE=['Aylin Kaya','Ben Hoffmann','Clara Schulz','Deniz Arslan','Emi
 const FUN_NAMES=[['Anton Apfelkern','m'],['Bella Blümchen','w'],['Carlo Comet','m'],['Dora Dattel','w'],['Emil Eisberg','m'],['Frida Funkel','w'],['Gustav Gurke','m'],['Hanna Honigtopf','w'],['Ivo Igel','m'],['Jule Jojo','w'],['Karl Kakao','m'],['Lotta Lakritz','w'],['Moritz Murmel','m'],['Nala Nachteule','w'],['Otto Ohrwurm','m'],['Pia Pfannkuchen','w'],['Quirin Quark','m'],['Rosa Regenbogen','w'],['Sami Sternschnuppe','m'],['Tilda Tintenfass','w'],['Udo Ukulele','m'],['Vera Vanille','w'],['Willi Wackelzahn','m'],['Xenia Xylofon','w'],['Yannik Yeti','m'],['Zora Zebra','w'],['Leo Löwenzahn','m'],['Mila Marzipan','w'],['Finn Flummi','m'],['Ella Erdbeer','w']];
 const SAMPLE_NAMES=FUN_NAMES.map(x=>x[0]);
 function sample(){
-  const c=makeClass('7b (Beispiel)',[],0,30,'bloecke');c.students=FUN_NAMES.map(([n,g])=>({id:uid(),name:n,g}));randomize(c);
-  return {v:12,zoom:1,classes:[c],current:c.id,flip:false,look:'modern'};
+  const c=makeClass('7b (Beispiel)',[],0,30,'bloecke');c.students=FUN_NAMES.map(([n,g])=>({id:uid(),name:n,g}));abbrClass(c);randomize(c);
+  return {v:13,zoom:1,classes:[c],current:c.id,flip:false,look:'modern'};
 }
 const validTpl=id=>!!TPL.find(t=>t.id===id);
 function load(){
@@ -825,14 +825,25 @@ function load(){
       if(v<11&&c.name==='7b (Beispiel)'&&c.students.length<30){const have=new Set(c.students.map(x=>x.name));SAMPLE_NAMES.filter(n=>!have.has(n)).slice(0,30-c.students.length).forEach(n=>{const st={id:uid(),name:n};c.students.push(st);const free=seatKeys(c).find(k=>!c.seats[k]);if(free)c.seats[free]=st.id;});}
       if(v<12&&/Beispiel/.test(c.name)){const oldSet=new Set(OLD_SAMPLE);let k=0;const used=new Set(c.students.map(x=>x.name));const pool=FUN_NAMES.filter(([n])=>!used.has(n));
         c.students.forEach(st=>{if(oldSet.has(st.name)&&k<pool.length){st.name=pool[k][0];st.g=pool[k][1];k++;}});}});
-    s.v=12;if(!s.classes.find(c=>c.id===s.current))s.current=s.classes[0].id;s.look=(!s.look||s.look==='foto')?'modern':s.look;if(typeof s.zoom!=='number')s.zoom=1;return s;}}}catch(e){}
+    s.classes.forEach(abbrClass);s.v=13;if(!s.classes.find(c=>c.id===s.current))s.current=s.classes[0].id;s.look=(!s.look||s.look==='foto')?'modern':s.look;if(typeof s.zoom!=='number')s.zoom=1;return s;}}}catch(e){}
   return sample();
 }
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 function cur(){return S.classes.find(c=>c.id===S.current)||S.classes[0];}
 function seatKeys(c){const k=[];c.tables.forEach(t=>DIM[t.type].seats.forEach((_,i)=>k.push(t.id+':'+i)));return k;}
+// Datenschutz: vom Nachnamen nur den Anfangsbuchstaben behalten
+function needsAbbr(n){const p=String(n).trim().split(/\s+/);return p.length>1&&!/\.$/.test(p[p.length-1]);}
+function abbrName(n,k){const p=String(n).trim().split(/\s+/);if(p.length<2)return p[0]||'';const last=p.pop();if(/\.$/.test(last))return p.concat(last).join(' ');const ch=[...last];return p.join(' ')+' '+ch.slice(0,Math.min(k||1,ch.length)).join('')+'.';}
+function abbrClass(c){
+  if(!c.students||!c.students.some(st=>needsAbbr(st.name)))return;
+  const taken=new Map();c.students.forEach(st=>{if(!needsAbbr(st.name))taken.set(st.name,st.id);});
+  c.students.forEach(st=>{if(!needsAbbr(st.name))return;const full=st.name;let k=1,a=abbrName(full,k);
+    while(taken.has(a)&&taken.get(a)!==st.id&&k<4){k++;a=abbrName(full,k);}
+    let base=a,i=2;while(taken.has(a)&&taken.get(a)!==st.id){a=base.replace(/\.$/,'')+i+'.';i++;}
+    st.name=a;taken.set(a,st.id);});
+}
 function clean(c){
-  c.students=c.students||[];c.tables=(c.tables||[]).filter(t=>DIM[t.type]);c.seats=c.seats||{};c.locked=c.locked||[];c.picked=c.picked||[];c.groups=c.groups||[];c.gsize=c.gsize||4;c.rules=c.rules&&typeof c.rules==='object'?c.rules:{};c.rules.apart=Array.isArray(c.rules.apart)?c.rules.apart:[];c.rules.front=Array.isArray(c.rules.front)?c.rules.front:[];c.rules.alt=!!c.rules.alt;c.favs=Array.isArray(c.favs)?c.favs.filter(Boolean).slice(0,2):[];while(c.favs.length<2)c.favs.push(null);
+  c.students=c.students||[];abbrClass(c);c.tables=(c.tables||[]).filter(t=>DIM[t.type]);c.seats=c.seats||{};c.locked=c.locked||[];c.picked=c.picked||[];c.groups=c.groups||[];c.gsize=c.gsize||4;c.rules=c.rules&&typeof c.rules==='object'?c.rules:{};c.rules.apart=Array.isArray(c.rules.apart)?c.rules.apart:[];c.rules.front=Array.isArray(c.rules.front)?c.rules.front:[];c.rules.alt=!!c.rules.alt;c.favs=Array.isArray(c.favs)?c.favs.filter(Boolean).slice(0,2):[];while(c.favs.length<2)c.favs.push(null);
   if(c.template&&!validTpl(c.template))c.template=null;
   const keys=new Set(seatKeys(c)),ids=new Set(c.students.map(s=>s.id)),seen=new Set();
   for(const k of Object.keys(c.seats)){const v=c.seats[k];if(!keys.has(k)||!ids.has(v)||seen.has(v))delete c.seats[k];else seen.add(v);}
@@ -1604,7 +1615,7 @@ function renderPanel(){
   }).join('');
 }
 function render(anim){renderPanel();renderRoom(anim);}
-function commit(anim){save();$('pngOut').hidden=true;render(anim);}
+function commit(anim){S.classes.forEach(abbrClass);save();$('pngOut').hidden=true;render(anim);}
 let tt;function toast(m){$('toast').textContent=m;clearTimeout(tt);tt=setTimeout(()=>$('toast').textContent='',4500);}
 function setPanel(p){panel=p;if(p==='spiel'&&typeof GAME!=='undefined')GAME.onShow();mode=p==='tische'?'tische':'schueler';if(mode!=='tische')sel.clear();pending=null;delConfirm=false;render();}
 
