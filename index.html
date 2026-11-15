@@ -37,6 +37,8 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px}
 .ctab[aria-selected=true]{background:var(--ink);border-color:var(--ink);color:#fff}
 .ctab.add{padding:9px 13px;color:var(--accent);font-size:18px;line-height:1}
 .ctab.edit{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:14px;color:var(--muted);border-color:transparent;background:none}
+.ctab.undoall{border-color:var(--line);background:var(--surface);color:var(--ink)}
+.ctab.undoall:disabled{opacity:.45;cursor:default}
 .ctab.edit[aria-pressed=true]{color:var(--accent);background:var(--accent-soft)}
 .primary.big{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;font-size:16px;font-weight:800;border-radius:12px}
 .primary.big .ico{width:20px;height:20px}
@@ -358,6 +360,7 @@ details[open] summary{margin-bottom:10px}
     <button class="ctab add" id="btnAddClass" title="Neue Klasse anlegen" aria-label="Neue Klasse anlegen">+</button>
     <button class="ctab edit" id="btnKlasse" data-panel="klasse" title="Klassen und Namen bearbeiten"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>Bearbeiten</button>
     <span class="grow"></span>
+    <button class="ctab edit undoall" id="btnUndoAll" disabled title="Nichts zum Rückgängigmachen"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Rückgängig</button>
 
   </div>
 
@@ -612,8 +615,9 @@ Finja</textarea>
         </section>
         <details class="fold" id="foldFine">
           <summary>Einzelne Tische</summary>
-          <p class="hint">Tische im Raum ziehen. Auf freiem Boden ein Feld aufziehen markiert mehrere.</p>
+          <p class="hint">Tische im Raum ziehen. Auf freiem Boden ein Feld aufziehen markiert mehrere. Losgelassene Tische rasten am nächsten Nachbartisch ein.</p>
           <div class="row"><button class="mini" id="addSingle">+ Einzeltisch</button><button class="mini" id="addDouble">+ Doppeltisch</button></div>
+          <label class="check"><input type="checkbox" id="snapOn"> Beim Loslassen am Nachbartisch ausrichten</label>
           <div class="selbox" id="selbox"></div>
         </details>
       </div>
@@ -857,7 +861,15 @@ function load(){
     if(v<13)s.classes.forEach(abbrClass);s.v=13;if(!s.classes.find(c=>c.id===s.current))s.current=s.classes[0].id;s.look=(!s.look||s.look==='foto')?'modern':s.look;if(typeof s.zoom!=='number')s.zoom=1;return s;}}}catch(e){}
   return sample();
 }
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+let undoStack=[],lastJSON=null,lastPush=0;
+function save(){const j=JSON.stringify(S);
+  if(lastJSON!==null&&j!==lastJSON){const now=Date.now();if(now-lastPush>700||!undoStack.length){undoStack.push(lastJSON);if(undoStack.length>50)undoStack.shift();}lastPush=now;}
+  lastJSON=j;try{localStorage.setItem(KEY,j);}catch(e){}updUndo();}
+function updUndo(){const b=document.getElementById('btnUndoAll');if(b){b.disabled=!undoStack.length;b.title=undoStack.length?'Letzte Änderung rückgängig machen (Strg+Z)':'Nichts zum Rückgängigmachen';}}
+function undoAll(){if(!undoStack.length){toast('Nichts zum Rückgängigmachen.');return;}
+  const prev=undoStack.pop();const o=JSON.parse(prev);Object.keys(S).forEach(k=>delete S[k]);Object.assign(S,o);S.classes.forEach(clean);
+  lastJSON=prev;lastPush=0;try{localStorage.setItem(KEY,prev);}catch(e){}
+  sel.clear();pending=null;pickKey=null;render();updUndo();toast('Letzte Änderung rückgängig gemacht.');}
 function cur(){return S.classes.find(c=>c.id===S.current)||S.classes[0];}
 function seatKeys(c){const k=[];c.tables.forEach(t=>DIM[t.type].seats.forEach((_,i)=>k.push(t.id+':'+i)));return k;}
 // Datenschutz: vom Nachnamen nur den Anfangsbuchstaben behalten
@@ -1641,6 +1653,7 @@ function renderPanel(){
   if(c.template==='kreis')sb='<p class="hint">Im Stuhlkreis stehen keine Tische. Zum freien Stellen eine andere Anordnung wählen.</p>';
   else if(sel.size)sb=`<div class="row"><strong class="grow">${sel.size} ${sel.size===1?'Tisch':'Tische'} markiert</strong><button data-op="none">Aufheben</button></div><div class="row"><button data-op="-15" aria-label="15 Grad nach links drehen">↺ 15°</button><button data-op="15" aria-label="15 Grad nach rechts drehen">↻ 15°</button><button data-op="90" aria-label="90 Grad drehen">↻ 90°</button><button class="danger" data-op="del">Löschen</button></div>`;
   else sb='<div class="row"><span class="hint grow">Kein Tisch markiert.</span><button data-op="all">Alle markieren</button></div>';
+  $('snapOn').checked=S.snap!==false;
   $('selbox').innerHTML=sb;if(sel.size)$('foldFine').open=true;
   $('pickInfo').innerHTML=c.picked.length?`${c.picked.length} von ${nS} waren schon dran. <button class="link" id="pickReset">Zurücksetzen</button>`:'Alle sind noch im Topf.';
   $('btnPick').disabled=!nS||picking;
@@ -1705,13 +1718,34 @@ svg.addEventListener('pointermove',e=>{
   if(tdrag){const p=svgPoint(e),L=limits(cur()),b=tdrag.bb;let dx=p.x-tdrag.px,dy=p.y-tdrag.py;if(Math.abs(dx)+Math.abs(dy)>3)tdrag.moved=true;
     dx=Math.round(dx/5)*5;dy=Math.round(dy/5)*5;
     if(b.x1-b.x0<=L.x1-L.x0)dx=clamp(dx,L.x0-b.x0,L.x1-b.x1);if(b.y1-b.y0<=L.y1-L.y0)dy=clamp(dy,L.y0-b.y0,L.y1-b.y1);
-    tdrag.items.forEach(it=>{it.t.x=it.ox+dx;it.t.y=it.oy+dy;const g=svg.querySelector(`[data-table="${it.t.id}"]`);if(g)g.setAttribute('transform',`translate(${it.t.x} ${it.t.y}) rotate(${it.t.r})`);});}
+    tdrag.items.forEach(it=>{it.t.x=it.ox+dx;it.t.y=it.oy+dy;const g=svg.querySelector(`[data-table="${it.t.id}"]`);if(g)g.setAttribute('transform',`translate(${it.t.x} ${it.t.y}) rotate(${it.t.r})${(it.t.k||1)!==1?` scale(${it.t.k})`:''}`);});}
   else if(marq){const p=svgPoint(e),x=Math.min(p.x,marq.x0),y=Math.min(p.y,marq.y0),w=Math.abs(p.x-marq.x0),h=Math.abs(p.y-marq.y0);
     marq.el.setAttribute('x',x);marq.el.setAttribute('y',y);marq.el.setAttribute('width',w);marq.el.setAttribute('height',h);
     sel=new Set(marq.base);cur().tables.forEach(t=>{if(t.x>=x&&t.x<=x+w&&t.y>=y&&t.y<=y+h)sel.add(t.id);});markSel();}
 });
+function snapToNeighbor(c,items){
+  const moved=new Set(items.map(t=>t.id)),fixed=c.tables.filter(t=>!moved.has(t.id));if(!fixed.length)return false;
+  const W=t=>DIM[t.type].w*(t.k||1),Dd=t=>(DIM[t.type].d+CH)*(t.k||1);
+  let best=null;
+  items.forEach(it=>{fixed.forEach(f=>{
+    const a=rad(f.r),ax=[Math.cos(a),Math.sin(a)],ay=[-Math.sin(a),Math.cos(a)];const d=Math.hypot(it.x-f.x,it.y-f.y);if(d>W(f)+W(it)+Dd(f)+60)return;
+    const cands=[];const side=W(f)/2+W(it)/2,row=Math.max(P*(f.k||1),Dd(f)+20);
+    [1,-1].forEach(sg=>{cands.push({x:f.x+ax[0]*side*sg,y:f.y+ax[1]*side*sg,r:f.r});});
+    cands.forEach(cd=>{const raw=Math.hypot(cd.x-it.x,cd.y-it.y);if(raw>100)return;const dist=raw*0.5;
+      if(fixed.some(o=>Math.hypot(o.x-cd.x,o.y-cd.y)<Math.min(W(o),W(it))/2))return;
+      if(!best||dist<best.dist)best={it,cd,dist};});
+    // nur gleiche Reihe/Spalte angleichen
+    if(norm(it.r)===norm(f.r)&&(norm(f.r)%90===0)){const ox=Math.abs(it.x-f.x),oy=Math.abs(it.y-f.y);
+      if(oy>0&&oy<35){const cd={x:it.x,y:f.y,r:it.r},dist=oy+40;if(!best||dist<best.dist)best={it,cd,dist};}
+      if(ox>0&&ox<35){const cd={x:f.x,y:it.y,r:it.r},dist=ox+40;if(!best||dist<best.dist)best={it,cd,dist};}}
+  });});
+  if(!best)return false;
+  const dx=best.cd.x-best.it.x,dy=best.cd.y-best.it.y;items.forEach(t=>{t.x=Math.round(t.x+dx);t.y=Math.round(t.y+dy);});
+  if(items.length===1)items[0].r=norm(best.cd.r);
+  return true;
+}
 function endTable(){
-  if(tdrag){if(tdrag.moved){cur().template=null;pickKey=null;}tdrag=null;commit();}
+  if(tdrag){if(tdrag.moved){const c=cur();c.template=null;pickKey=null;if(S.snap!==false){const its=tdrag.items.map(i=>i.t);if(snapToNeighbor(c,its))keepInside(c,its);}}tdrag=null;commit();}
   else if(marq){marq.el.remove();marq=null;renderPanel();}
 }
 svg.addEventListener('pointerup',endTable);svg.addEventListener('pointercancel',endTable);
@@ -1767,6 +1801,8 @@ $('ruleAddFront').onclick=()=>{const c=cur(),f=$('ruleF').value;if(!f){toast('Bi
 function rulePop(o){$('rulePop').hidden=!o;$('btnAddRule').setAttribute('aria-expanded',String(o));$('btnAddRule').textContent=o?'Schließen':'+ Regel';}
 $('btnAddRule').onclick=()=>rulePop($('rulePop').hidden);
 document.querySelectorAll('[data-rt]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-rt]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));document.querySelectorAll('[data-rtp]').forEach(x=>x.hidden=x.dataset.rtp!==b.dataset.rt);});
+$('btnUndoAll').onclick=undoAll;
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key.toLowerCase()==='z'&&!e.target.closest('input,textarea,select')){e.preventDefault();undoAll();}});
 $('btnUnlockAll').onclick=()=>{const c=cur();c.locked=[];commit();toast('Alle Plätze gelöst.');};
 $('ruleAlt').onchange=e=>{const c=cur();c.rules.alt=e.target.checked;if(c.rules.alt&&!c.students.some(s=>s.g))toast('Lege zuerst bei „Klassen“ fest, wer m und wer w ist.');commit();};
 $('btnSetG').onclick=()=>setPanel('klasse');
@@ -1881,8 +1917,10 @@ $('btnCounts').onclick=()=>{const c=cur(),ns=clamp(parseInt($('nSingle').value)|
     for(let i=have.length;i<want;i++)c.tables.push({id:uid(),type,x:0,y:0,r:0});});
   clean(c);applyTemplate(c,c.template||'bloecke');sel.clear();pickKey=null;commit();toast(`${seatKeys(c).length} Plätze im Raum.`);};
 $('tpl').onclick=e=>{const b=e.target.closest('[data-tpl]');if(!b)return;applyTemplate(cur(),b.dataset.tpl);sel.clear();pickKey=null;commit();};
-function addTable(type){const c=cur();if(c.template==='kreis')applyTemplate(c,'bloecke');const L=limits(c);const t={id:uid(),type,x:Math.round((L.x0+L.x1)/2),y:Math.round(L.y1-80),r:0};c.tables.push(t);keepInside(c,[t]);sel=new Set([t.id]);c.template=null;commit();}
+function addTable(type){const c=cur();if(c.template==='kreis')applyTemplate(c,'bloecke');const L=limits(c);const ks={};c.tables.forEach(x=>{const k=x.k||1;ks[k]=(ks[k]||0)+1;});const k=+(Object.entries(ks).sort((a,b)=>b[1]-a[1])[0]||[1])[0]||1;
+  const t={id:uid(),type,x:Math.round((L.x0+L.x1)/2),y:Math.round(L.y1-80),r:0};if(k!==1)t.k=k;c.tables.push(t);keepInside(c,[t]);sel=new Set([t.id]);c.template=null;commit();}
 $('addSingle').onclick=()=>addTable('single');
+$('snapOn').onchange=e=>{S.snap=e.target.checked;save();};
 $('addDouble').onclick=()=>addTable('double');
 
 // Person auswählen
@@ -2378,7 +2416,7 @@ return{onShow(){if(state==='intro'||state==='over'){loadStored();renderPick();}}
 }
 $('svgStyle').textContent=SVG_CSS;
 if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)document.querySelectorAll('#room .spin').forEach(n=>n.remove());
-S=load();render();updateDl();
+S=load();lastJSON=JSON.stringify(S);render();updateDl();updUndo();
 const GAME=initGame({classes:()=>S.classes,currentId:()=>cur().id,visible:()=>panel==='spiel'});
 function sizeGame(){const gc=$('gameCard');if(gc.hidden)return;gc.style.width=Math.min(availW()+28,820)+'px';}
 window.addEventListener('resize',sizeGame);
