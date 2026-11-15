@@ -40,9 +40,12 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px}
 .ctab.edit[aria-pressed=true]{color:var(--accent);background:var(--accent-soft)}
 .primary.big{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;font-size:16px;font-weight:800;border-radius:12px}
 .primary.big .ico{width:20px;height:20px}
-.plantools{position:absolute;top:10px;right:10px;z-index:5;display:flex;gap:6px}
+.plantools{position:absolute;top:8%;left:50%;transform:translateX(-50%);z-index:5;display:flex;gap:6px}
+.roomframe.flipped .plantools{top:auto;bottom:8%}
+.roomframe.flipped .inplan .pop{top:auto;bottom:calc(100% + 8px)}
+button.primary.rnd{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 16px;font-size:16px;font-weight:800;border-radius:11px}
 .ptool{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:11px;padding:7px 11px;background:rgba(255,255,255,.94);box-shadow:0 6px 18px -10px rgba(20,35,70,.45);font-weight:700;color:var(--ink)}
-.inplan .pop{left:auto;right:0}
+.inplan .pop{left:50%;right:auto;transform:translateX(-50%)}
 .pop.menu{width:220px;gap:2px;padding:6px}
 .pop.menu button{display:flex;align-items:center;gap:9px;border:0;border-radius:9px;padding:9px 10px;background:none;text-align:left;font-weight:600;color:var(--ink)}
 .pop.menu button:hover{background:var(--soft)}
@@ -338,7 +341,7 @@ details[open] summary{margin-bottom:10px}
     <button class="ctab add" id="btnAddClass" title="Neue Klasse anlegen" aria-label="Neue Klasse anlegen">+</button>
     <button class="ctab edit" id="btnKlasse" data-panel="klasse" title="Klassen und Namen bearbeiten"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>Bearbeiten</button>
     <span class="grow"></span>
-<button class="primary big" id="btnRandom"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="8.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg>Zufällig verteilen</button>
+
   </div>
 
   <div class="layout" id="layout">
@@ -347,14 +350,9 @@ details[open] summary{margin-bottom:10px}
         <button data-panel="tische"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M3 12h18M9.5 5.5 12 3l2.5 2.5M9.5 18.5 12 21l2.5-2.5M5.5 9.5 3 12l2.5 2.5M18.5 9.5 21 12l-2.5 2.5"/></svg>Tischordnung</button>
         <button data-panel="plan"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="3" rx="1"/><rect x="4" y="10" width="6" height="4" rx="1"/><rect x="14" y="10" width="6" height="4" rx="1"/><rect x="4" y="17" width="6" height="4" rx="1"/><rect x="14" y="17" width="6" height="4" rx="1"/></svg>Verteilen</button>
 
-        <button data-panel="lose"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="11" height="11" rx="2.5"/><circle cx="6.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="10.5" cy="10.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="17" cy="13" r="2.3"/><path d="M12.5 21c0-2.6 2-4.6 4.5-4.6s4.5 2 4.5 4.6"/></svg>Losen &amp; Gruppen</button>
-        <div class="lookwrap morewrap">
-          <button id="btnMore" aria-haspopup="true" aria-expanded="false" aria-controls="morePop">Mehr<svg class="chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
-          <div class="pop menu" id="morePop" hidden>
-            <button data-panel="spiel"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 3 3 10.5l7 2.5 2.5 7z"/><path d="M21 3 10 13"/></svg>Minispiel</button>
-            <button data-panel="export"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></svg>Export &amp; Drucken</button>
-          </div>
-        </div>
+        <button data-panel="lose"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="11" height="11" rx="2.5"/><circle cx="6.5" cy="6.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="10.5" cy="10.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="17" cy="13" r="2.3"/><path d="M12.5 21c0-2.6 2-4.6 4.5-4.6s4.5 2 4.5 4.6"/></svg>Losgenerator</button>
+        <button data-panel="spiel"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 3 3 10.5l7 2.5 2.5 7z"/><path d="M21 3 10 13"/></svg>Minispiel</button>
+        <button data-panel="export"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></svg>Export</button>
       </nav>
       <div class="card room">
         <div class="custom" id="customPanel" hidden>
@@ -533,6 +531,7 @@ Finja</textarea>
         <h2 id="sideTitle">Klasse</h2>
         <div class="statusbox">
           <div class="status" id="status"></div>
+          <button class="primary rnd" id="btnRandom"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="8.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg>Zufällig verteilen</button>
           <div class="minirow">
             <button class="mini" id="btnUndoRandom" hidden>↶ Rückgängig</button>
             <button class="mini" id="btnClear">Abräumen</button>
@@ -1523,13 +1522,13 @@ function thumb(id){
 function renderPanel(){
   const c=cur();
   $('classTabs').innerHTML=S.classes.map(k=>`<button class="ctab" role="tab" data-cls="${k.id}" aria-selected="${k.id===c.id}">${esc(k.name)}</button>`).join('');
-  $('btnMore').classList.toggle('on',panel==='spiel'||panel==='export');
-  $('classSel').innerHTML=S.classes.map(k=>`<option value="${k.id}"${k.id===c.id?' selected':''}>${esc(k.name)}</option>`).join('');
+    $('classSel').innerHTML=S.classes.map(k=>`<option value="${k.id}"${k.id===c.id?' selected':''}>${esc(k.name)}</option>`).join('');
   document.querySelectorAll('[data-panel]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.panel===panel)));
   document.querySelectorAll('#side > .pane').forEach(p=>{p.hidden=p.id!=='pane-'+panel;});
   $('btnBonus').hidden=S.look!=='disco';
   $('gameCard').hidden=panel!=='spiel';document.querySelector('.card.room').hidden=panel==='spiel';if(panel==='spiel'&&typeof sizeGame==='function')sizeGame();
   document.querySelectorAll('[data-look]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.look===S.look)));
+  document.querySelector('.roomframe').classList.toggle('flipped',!!S.flip);
   $('viewS').setAttribute('aria-pressed',String(!S.flip));$('viewL').setAttribute('aria-pressed',String(S.flip));
   const nS=c.students.length,nP=seatKeys(c).length;
   $('sideTitle').textContent=c.name;renderRules(c);if(typeof renderPrintMode==='function')renderPrintMode();
@@ -1685,11 +1684,9 @@ $('ruleAlt').onchange=e=>{const c=cur();c.rules.alt=e.target.checked;if(c.rules.
 $('btnSetG').onclick=()=>setPanel('klasse');
 $('ruleList').onclick=e=>{const b=e.target.closest('[data-rdel]');if(!b)return;const c=cur(),k=b.dataset.rdel,i=+k.slice(1);if(k[0]==='a')c.rules.apart.splice(i,1);else if(k[0]==='m')c.rules.alt=false;else c.rules.front.splice(i,1);commit();};
 function popToggle(btn,pop,o){if(o)closePops();$(pop).hidden=!o;$(btn).setAttribute('aria-expanded',String(o));}
-function closePops(){[['btnLook','lookPop'],['btnMore','morePop']].forEach(([b,p])=>{$(p).hidden=true;$(b).setAttribute('aria-expanded','false');});}
+function closePops(){[['btnLook','lookPop']].forEach(([b,p])=>{$(p).hidden=true;$(b).setAttribute('aria-expanded','false');});}
 function lookOpen(o){popToggle('btnLook','lookPop',o);}
 $('btnLook').onclick=e=>{e.stopPropagation();lookOpen($('lookPop').hidden);};
-$('btnMore').onclick=e=>{e.stopPropagation();popToggle('btnMore','morePop',$('morePop').hidden);};
-$('morePop').addEventListener('click',e=>{if(e.target.closest('[data-panel]'))closePops();});
 document.addEventListener('click',e=>{if(!e.target.closest('.lookwrap'))closePops();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closePops();});
 $('btnPrintTop').onclick=()=>$('btnPrint').click();
