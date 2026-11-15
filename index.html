@@ -685,24 +685,31 @@ Finja</textarea>
         </details>
       </div>
 
+      <div class="pane" id="pane-neu" hidden>
+        <h2>Neue Klasse</h2>
+        <label class="hint" for="ncName">Name der Klasse</label>
+        <input type="text" id="ncName" placeholder="z. B. 8a" autocomplete="off">
+        <label class="hint" for="ncNames">Namen: einer pro Zeile, oder eine Spalte aus Excel hineinkopieren. Mit „(m)“ oder „(w)“ dahinter ist das Geschlecht gleich gesetzt.</label>
+        <textarea id="ncNames" rows="9" placeholder="Mia Schmidt (w)&#10;Tom Becker (m)&#10;…"></textarea>
+        <div class="row"><label class="hint grow" for="ncCsv">oder Liste laden (Excel als CSV, .txt):</label></div>
+        <input type="file" id="ncCsv" accept=".csv,.txt,text/csv,text/plain">
+        <p class="hint" id="ncCount">0 Namen</p>
+        <button class="primary rnd" id="ncCreate">Klasse anlegen</button>
+        <button class="link" id="ncCancel" style="align-self:flex-start">Abbrechen</button>
+      </div>
+
       <div class="pane" id="pane-klasse" hidden>
         <h2>Klassen</h2>
         <section>
           <h3>Meine Klassen</h3>
           <div class="clist" id="classList"></div>
         </section>
+        <button id="btnNewClass2" style="align-self:flex-start">+ Neue Klasse</button>
         <section>
-          <h3>Neue Klasse</h3>
-          <div class="row">
-            <input type="text" id="newClassName" placeholder="z. B. 8a" aria-label="Name der neuen Klasse" size="12" style="flex:1">
-            <button class="primary" id="btnNewClass">Anlegen</button>
-          </div>
-        </section>
-        <section>
-          <h3>Aktuelle Klasse</h3>
-          <label class="hint" for="klassName">Name</label>
+          <h3 id="editTitle">Namen</h3>
+          <label class="hint" for="klassName">Name der Klasse</label>
           <input type="text" id="klassName">
-          <label class="hint" for="newNames">Namen hinzufügen: einer pro Zeile, oder eine Spalte aus Excel hineinkopieren. Mit „(m)“ oder „(w)“ dahinter ist das Geschlecht gleich gesetzt.</label>
+          <label class="hint" for="newNames">Weitere Namen hinzufügen (einer pro Zeile, „(m)“/„(w)“ möglich):</label>
           <textarea id="newNames" rows="4" placeholder="Mia Schmidt (w)&#10;Tom Becker (m)"></textarea>
           <div class="row"><button id="btnAddNames">Hinzufügen</button><label class="hint" for="csvNames" style="flex:1">oder Liste laden (Excel als CSV, .txt):</label></div>
           <input type="file" id="csvNames" accept=".csv,.txt,text/csv,text/plain">
@@ -1695,15 +1702,26 @@ document.querySelectorAll('[data-look]').forEach(b=>b.onclick=()=>{S.look=b.data
 $('viewS').onclick=()=>{S.flip=false;commit();};
 $('viewL').onclick=()=>{S.flip=true;commit();};
 $('classTabs').onclick=e=>{const b=e.target.closest('[data-cls]');if(!b||b.dataset.cls===S.current)return;$('classSel').value=b.dataset.cls;$('classSel').onchange({target:$('classSel')});};
-$('btnAddClass').onclick=()=>{setPanel('klasse');setTimeout(()=>{const i=$('newClassName');i.scrollIntoView({block:'center',behavior:'smooth'});i.focus();},60);};
+$('btnAddClass').onclick=openNew;
 $('classSel').onchange=e=>{S.current=e.target.value;sel.clear();pending=null;pickKey=null;delConfirm=false;resetPick();commit();};
-function newClass(){
-  const n=$('newClassName').value.trim();if(!n){toast('Bitte zuerst einen Namen für die Klasse eingeben.');$('newClassName').focus();return;}
-  const c=makeClass(n,[],0,30,'bloecke');S.classes.push(c);S.current=c.id;$('newClassName').value='';sel.clear();pickKey=null;resetPick();
-  panel='klasse';mode='schueler';commit();toast(`Klasse ${n} angelegt. Jetzt die Namen eintragen.`);$('newNames').focus();
+function ncList(){return parseNames($('ncNames').value);}
+function ncUpd(){const n=ncList().length;$('ncCount').textContent=n?`${n} ${n===1?'Name':'Namen'} – es werden ${n} Einzeltische gestellt und alle zufällig verteilt.`:'Noch keine Namen. Du kannst sie auch später ergänzen.';}
+function openNew(){$('ncName').value='';$('ncNames').value='';ncUpd();setPanel('neu');setTimeout(()=>$('ncName').focus(),50);}
+function createClass(){
+  const n=$('ncName').value.trim();if(!n){toast('Bitte einen Namen für die Klasse eingeben.');$('ncName').focus();return;}
+  const names=ncList(),cnt=names.length||30;
+  const c=makeClass(n,[],0,cnt,'bloecke');c.students=names.map(mkStudent);
+  S.classes.push(c);S.current=c.id;sel.clear();pickKey=null;resetPick();
+  if(names.length)randomize(c);
+  panel='plan';mode='schueler';commit(true);
+  toast(names.length?`Klasse ${n} angelegt und verteilt.`:`Klasse ${n} angelegt. Namen über „Bearbeiten“ eintragen.`);
 }
-$('btnNewClass').onclick=newClass;
-$('newClassName').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();newClass();}});
+$('ncCreate').onclick=createClass;
+$('ncCancel').onclick=()=>setPanel('plan');
+$('ncNames').addEventListener('input',ncUpd);
+$('ncName').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('ncNames').focus();}});
+$('ncCsv').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const names=parseNames(r.result);if(!names.length){toast('In der Datei wurden keine Namen gefunden.');return;}const t=$('ncNames');t.value=(t.value.trim()?t.value.trim()+'\n':'')+names.join('\n');ncUpd();};r.readAsText(f);e.target.value='';};
+$('btnNewClass2').onclick=openNew;
 $('klassName').oninput=e=>{cur().name=e.target.value||'Ohne Namen';save();renderRoom();$('sideTitle').textContent=cur().name;const o=$('classSel').selectedOptions[0];if(o)o.textContent=cur().name;const t=document.querySelector(`[data-cls="${cur().id}"]`);if(t)t.textContent=cur().name;};
 $('btnAddNames').onclick=()=>{const c=cur(),names=$('newNames').value.split(/[\n;]+/).map(s=>s.trim()).filter(Boolean);
   if(!names.length){toast('Keine Namen gefunden.');return;}names.forEach(n=>c.students.push(mkStudent(n)));$('newNames').value='';commit();toast(`${names.length} Namen hinzugefügt.`);};
