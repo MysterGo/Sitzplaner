@@ -872,7 +872,7 @@ const FUN_NAMES=[['Anton Apfelkern','m'],['Bella Blümchen','w'],['Carlo Comet',
 const SAMPLE_NAMES=FUN_NAMES.map(x=>x[0]);
 function sample(){
   const c=makeClass('7b (Beispiel)',[],0,30,'bloecke');c.students=FUN_NAMES.map(([n,g])=>({id:uid(),name:n,g}));abbrClass(c);randomize(c);
-  return {v:15,zoom:1,classes:[c],current:c.id,flip:false,look:'klasse'};
+  return {v:16,zoom:1,classes:[c],current:c.id,flip:false,look:'klasse'};
 }
 const validTpl=id=>!!TPL.find(t=>t.id===id);
 function load(){
@@ -883,11 +883,11 @@ function load(){
       if(v<12&&/Beispiel/.test(c.name)){const oldSet=new Set(OLD_SAMPLE);let k=0;const used=new Set(c.students.map(x=>x.name));const pool=FUN_NAMES.filter(([n])=>!used.has(n));
         c.students.forEach(st=>{if(oldSet.has(st.name)&&k<pool.length){st.name=pool[k][0];st.g=pool[k][1];k++;}});}});
     if(v<13)s.classes.forEach(abbrClass);
-    if(v<15)s.classes.forEach(c=>{if(c.template!=='bloecke'||!c.tables.length)return;const ok=c.tables[0].k||1;if(ok===0.96||c.tables.some(t=>(t.k||1)!==ok))return;
-      const cp=JSON.parse(JSON.stringify(c));BK=ok;applyTemplate(cp,'bloecke');BK=0.96;
+    if(v<16)s.classes.forEach(c=>{if(c.template!=='bloecke'||!c.tables.length)return;const ok=c.tables[0].k||1;if(c.tables.some(t=>(t.k||1)!==ok))return;
+      const cp=JSON.parse(JSON.stringify(c));BK=ok;BOLD=true;applyTemplate(cp,'bloecke');BK=0.96;BOLD=false;
       const same=cp.tables.every(t=>{const o=c.tables.find(x=>x.id===t.id);return o&&o.x===t.x&&o.y===t.y&&(o.r||0)===(t.r||0);})&&cp.room.w===c.room.w&&cp.room.h===c.room.h;
       if(same)applyTemplate(c,'bloecke');});
-    s.v=15;if(!s.classes.find(c=>c.id===s.current))s.current=s.classes[0].id;s.look=(!s.look||s.look==='foto'||s.look==='modern')?'klasse':s.look;if(typeof s.zoom!=='number')s.zoom=1;return s;}}}catch(e){}
+    s.v=16;if(!s.classes.find(c=>c.id===s.current))s.current=s.classes[0].id;s.look=(!s.look||s.look==='foto'||s.look==='modern')?'klasse':s.look;if(typeof s.zoom!=='number')s.zoom=1;return s;}}}catch(e){}
   return sample();
 }
 let undoStack=[],lastJSON=null,lastPush=0;
@@ -954,11 +954,12 @@ function placeRow(row,cx,y,gap,out,ts,ang){const a=rad(ang||0),tw=rowW(row,gap);
 function pitch(n,min){const base=min||P;if(n<2)return base;return clamp((BH-TOPZ-GANG-BACK-WALL-TD-CH)/(n-1),base,base+70);}
 function packRowsFit(ts,maxW,gap){const rest=[...ts],rows=[];while(rest.length){const row=[];let w=0;for(let i=0;i<rest.length;){const add=(row.length?gap:0)+wOf(rest[i]);if(w+add<=maxW){row.push(rest[i]);w+=add;rest.splice(i,1);}else i++;}if(!row.length)row.push(rest.shift());rows.push(row);}return rows;}
 function lay_rows(ts,gap){const out=[],rows=packRowsFit(ts,UW,gap),p=pitch(rows.length);rows.forEach((r,i)=>placeRow(r,0,i*p,gap,out,ts));return out;}
-let BK=0.96;
+let BK=0.96,BOLD=false;const CURT=28;
 function lay_bloecke(ts,ang){
   ts.forEach(t=>{if(BK!==1)t.k=BK;else delete t.k;});
-  const out=[],L=[],R=[],A=AISLE,bw=(UW-A)/2;ts.forEach((t,i)=>(i%2?R:L).push(t));
+  const out=[],L=[],R=[],bw=(UW-AISLE)/2;ts.forEach((t,i)=>(i%2?R:L).push(t));
   const rl=packRowsFit(L,bw,0),rr=packRowsFit(R,bw,0),n=Math.max(rl.length,rr.length),p=pitch(n,ang?P+40:P);
+  const mw=r=>Math.max(0,...r.map(x=>rowW(x,0))),A=(BOLD||ang)?AISLE:Math.max(AISLE,BW-2*WALL-CURT-mw(rl)-mw(rr));
   rl.forEach((r,i)=>placeRow(r,-A/2-rowW(r,0)/2,i*p,0,out,ts,ang||0));
   rr.forEach((r,i)=>placeRow(r,A/2+rowW(r,0)/2,i*p,0,out,ts,-(ang||0)));
   out.forEach(o=>{if(o&&BK!==1)o.k=BK;});return out;
@@ -1049,7 +1050,7 @@ function fitRoom(c,recenter){
   let b=bboxOf(c.tables);const bw=b.x1-b.x0,bh=b.y1-b.y0;
   if(recenter){
     const w=Math.max(BW,Math.ceil(bw+2*(WALL+gangOf(c)))),need=Math.ceil(TOPZ+bh+GANG+BACK+WALL),h=Math.max(BH,need);
-    const free=h-need,dx=w/2-(b.x0+b.x1)/2,dy=TOPZ+Math.max(0,free*0.25)-b.y0;
+    const free=h-need,dx=(c.template==='bloecke'&&!BOLD&&w===BW)?WALL+CURT-b.x0:w/2-(b.x0+b.x1)/2,dy=TOPZ+Math.max(0,free*0.25)-b.y0;
     c.tables.forEach(t=>{t.x=Math.round(t.x+dx);t.y=Math.round(t.y+dy);});c.room={w,h};
   }else{
     const L=limits({room:c.room||{w:BW,h:BH}}),dx=Math.max(0,L.x0-b.x0),dy=Math.max(0,L.y0-b.y0);
