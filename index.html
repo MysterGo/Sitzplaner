@@ -872,7 +872,7 @@ const FUN_NAMES=[['Anton Apfelkern','m'],['Bella Blümchen','w'],['Carlo Comet',
 const SAMPLE_NAMES=FUN_NAMES.map(x=>x[0]);
 function sample(){
   const c=makeClass('7b (Beispiel)',[],0,30,'bloecke');c.students=FUN_NAMES.map(([n,g])=>({id:uid(),name:n,g}));abbrClass(c);randomize(c);
-  return {v:14,zoom:1,classes:[c],current:c.id,flip:false,look:'klasse'};
+  return {v:15,zoom:1,classes:[c],current:c.id,flip:false,look:'klasse'};
 }
 const validTpl=id=>!!TPL.find(t=>t.id===id);
 function load(){
@@ -883,11 +883,11 @@ function load(){
       if(v<12&&/Beispiel/.test(c.name)){const oldSet=new Set(OLD_SAMPLE);let k=0;const used=new Set(c.students.map(x=>x.name));const pool=FUN_NAMES.filter(([n])=>!used.has(n));
         c.students.forEach(st=>{if(oldSet.has(st.name)&&k<pool.length){st.name=pool[k][0];st.g=pool[k][1];k++;}});}});
     if(v<13)s.classes.forEach(abbrClass);
-    if(v<14)s.classes.forEach(c=>{if(c.template!=='bloecke'||!c.tables.length||c.tables.some(t=>t.k))return;
-      const cp=JSON.parse(JSON.stringify(c));BK=1;applyTemplate(cp,'bloecke');BK=0.94;
+    if(v<15)s.classes.forEach(c=>{if(c.template!=='bloecke'||!c.tables.length)return;const ok=c.tables[0].k||1;if(ok===0.96||c.tables.some(t=>(t.k||1)!==ok))return;
+      const cp=JSON.parse(JSON.stringify(c));BK=ok;applyTemplate(cp,'bloecke');BK=0.96;
       const same=cp.tables.every(t=>{const o=c.tables.find(x=>x.id===t.id);return o&&o.x===t.x&&o.y===t.y&&(o.r||0)===(t.r||0);})&&cp.room.w===c.room.w&&cp.room.h===c.room.h;
       if(same)applyTemplate(c,'bloecke');});
-    s.v=14;if(!s.classes.find(c=>c.id===s.current))s.current=s.classes[0].id;s.look=(!s.look||s.look==='foto'||s.look==='modern')?'klasse':s.look;if(typeof s.zoom!=='number')s.zoom=1;return s;}}}catch(e){}
+    s.v=15;if(!s.classes.find(c=>c.id===s.current))s.current=s.classes[0].id;s.look=(!s.look||s.look==='foto'||s.look==='modern')?'klasse':s.look;if(typeof s.zoom!=='number')s.zoom=1;return s;}}}catch(e){}
   return sample();
 }
 let undoStack=[],lastJSON=null,lastPush=0;
@@ -954,7 +954,7 @@ function placeRow(row,cx,y,gap,out,ts,ang){const a=rad(ang||0),tw=rowW(row,gap);
 function pitch(n,min){const base=min||P;if(n<2)return base;return clamp((BH-TOPZ-GANG-BACK-WALL-TD-CH)/(n-1),base,base+70);}
 function packRowsFit(ts,maxW,gap){const rest=[...ts],rows=[];while(rest.length){const row=[];let w=0;for(let i=0;i<rest.length;){const add=(row.length?gap:0)+wOf(rest[i]);if(w+add<=maxW){row.push(rest[i]);w+=add;rest.splice(i,1);}else i++;}if(!row.length)row.push(rest.shift());rows.push(row);}return rows;}
 function lay_rows(ts,gap){const out=[],rows=packRowsFit(ts,UW,gap),p=pitch(rows.length);rows.forEach((r,i)=>placeRow(r,0,i*p,gap,out,ts));return out;}
-let BK=0.94;
+let BK=0.96;
 function lay_bloecke(ts,ang){
   ts.forEach(t=>{if(BK!==1)t.k=BK;else delete t.k;});
   const out=[],L=[],R=[],A=AISLE,bw=(UW-A)/2;ts.forEach((t,i)=>(i%2?R:L).push(t));
