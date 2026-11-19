@@ -414,7 +414,7 @@ details[open] summary{margin-bottom:10px}
           <div class="pop" id="lookPop" hidden>
             <div class="poph">Aussehen</div>
             <div class="looklist" role="group" aria-label="Aussehen">
-              <button data-look="modern"><span class="sw" style="background:linear-gradient(135deg,#f1dfbd 50%,#cfdcf0 50%)"></span>Modern</button>
+              <button data-look="klasse"><span class="sw" style="background:linear-gradient(135deg,#d2bd94 0 33%,#e9dfcc 33% 66%,#2a4c9c 66%)"></span>Klassenraum</button>
               <button data-look="schlicht"><span class="sw" style="background:linear-gradient(135deg,#fff 50%,#222 50%)"></span>Schlicht</button>
               <button data-look="fach"><span class="sw" style="background:linear-gradient(135deg,#e8edf2 50%,#3d8a5c 50%)"></span>Fachraum</button>
               <button data-look="custom"><span class="sw" style="background:conic-gradient(#e94e4e,#f2b632,#4cb050,#3d8fd9,#9d6bff,#e94e4e)"></span>Eigene</button>
@@ -485,6 +485,11 @@ details[open] summary{margin-bottom:10px}
             <radialGradient id="spotY"><stop offset="0" stop-color="#ffb000" stop-opacity=".35"/><stop offset="1" stop-color="#ffb000" stop-opacity="0"/></radialGradient>
             <linearGradient id="ray" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
             <filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <pattern id="brickK" width="64" height="16" patternUnits="userSpaceOnUse"><rect width="64" height="16" fill="#a3998a"/><rect x="1" y="1" width="30" height="6.5" rx=".6" fill="#cfb994"/><rect x="33" y="1" width="30" height="6.5" rx=".6" fill="#c8b18a"/><rect x="-15" y="9" width="30" height="6.5" rx=".6" fill="#ccb690"/><rect x="17" y="9" width="30" height="6.5" rx=".6" fill="#d3be99"/><rect x="49" y="9" width="30" height="6.5" rx=".6" fill="#c9b38c"/></pattern>
+            <linearGradient id="beechK" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fae2be"/><stop offset="1" stop-color="#f2ce9d"/></linearGradient>
+            <linearGradient id="plyK" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fae2be"/><stop offset="1" stop-color="#f2ce9d"/></linearGradient>
+            <pattern id="grainK" width="140" height="22" patternUnits="userSpaceOnUse"><path d="M0 5 q35 -3 70 0 t70 0M0 13 q35 3 70 0 t70 0M0 19 q35 -2 70 0 t70 0" fill="none" stroke="#c69257" stroke-width=".7" opacity=".35"/></pattern>
+            <linearGradient id="curtK" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#16306e"/><stop offset=".5" stop-color="#2a4c9c"/><stop offset="1" stop-color="#16306e"/></linearGradient>
           </defs>
           <g id="roomG"></g>
         </svg>
@@ -867,7 +872,7 @@ const FUN_NAMES=[['Anton Apfelkern','m'],['Bella Blümchen','w'],['Carlo Comet',
 const SAMPLE_NAMES=FUN_NAMES.map(x=>x[0]);
 function sample(){
   const c=makeClass('7b (Beispiel)',[],0,30,'bloecke');c.students=FUN_NAMES.map(([n,g])=>({id:uid(),name:n,g}));abbrClass(c);randomize(c);
-  return {v:13,zoom:1,classes:[c],current:c.id,flip:false,look:'modern'};
+  return {v:13,zoom:1,classes:[c],current:c.id,flip:false,look:'klasse'};
 }
 const validTpl=id=>!!TPL.find(t=>t.id===id);
 function load(){
@@ -877,7 +882,7 @@ function load(){
       if(v<11&&c.name==='7b (Beispiel)'&&c.students.length<30){const have=new Set(c.students.map(x=>x.name));SAMPLE_NAMES.filter(n=>!have.has(n)).slice(0,30-c.students.length).forEach(n=>{const st={id:uid(),name:n};c.students.push(st);const free=seatKeys(c).find(k=>!c.seats[k]);if(free)c.seats[free]=st.id;});}
       if(v<12&&/Beispiel/.test(c.name)){const oldSet=new Set(OLD_SAMPLE);let k=0;const used=new Set(c.students.map(x=>x.name));const pool=FUN_NAMES.filter(([n])=>!used.has(n));
         c.students.forEach(st=>{if(oldSet.has(st.name)&&k<pool.length){st.name=pool[k][0];st.g=pool[k][1];k++;}});}});
-    if(v<13)s.classes.forEach(abbrClass);s.v=13;if(!s.classes.find(c=>c.id===s.current))s.current=s.classes[0].id;s.look=(!s.look||s.look==='foto')?'modern':s.look;if(typeof s.zoom!=='number')s.zoom=1;return s;}}}catch(e){}
+    if(v<13)s.classes.forEach(abbrClass);s.v=13;if(!s.classes.find(c=>c.id===s.current))s.current=s.classes[0].id;s.look=(!s.look||s.look==='foto'||s.look==='modern')?'klasse':s.look;if(typeof s.zoom!=='number')s.zoom=1;return s;}}}catch(e){}
   return sample();
 }
 let undoStack=[],lastJSON=null,lastPush=0;
@@ -1235,6 +1240,7 @@ function chairInner(col){
   if(S.look==='custom'){const st=shade(CC().chair,-.35);return `<path d="M-27 2 q27 -5 54 0 l-2 25 q-25 5 -50 0z" fill="url(#cChair)" stroke="${st}" stroke-width="1.6"/><path d="M-31 27 q31 11 62 0 l-1 9 q-30 11 -60 0z" fill="url(#cChair)" stroke="${st}" stroke-width="1.6"/>`;}
   if(S.look==='disco'){col=col||'#00e5ff';return `<path d="M-27 2 q27 -5 54 0 l-2 25 q-25 5 -50 0z" fill="#140a2c" stroke="${col}" stroke-width="2.2"/><path d="M-31 27 q31 11 62 0 l-1 9 q-30 11 -60 0z" fill="#140a2c" stroke="${col}" stroke-width="2.2"/>`;}
   if(S.look==='foto')return `<g filter="url(#dsS)"><rect x="-34" y="1" width="4" height="38" rx="2" fill="#3e64a6"/><rect x="30" y="1" width="4" height="38" rx="2" fill="#3e64a6"/><path d="M-28 2 h56 a5 5 0 0 1 5 5 v18 a7 7 0 0 1 -7 7 h-52 a7 7 0 0 1 -7 -7 v-18 a5 5 0 0 1 5 -5z" fill="url(#seatF)" stroke="#9c6a2a" stroke-width=".9"/><path d="M-32 30 q32 11 64 0 v7 q-32 11 -64 0z" fill="url(#backF)" stroke="#8f5f22" stroke-width=".9"/></g>`;
+  if(S.look==='klasse')return `<rect x="-32.5" y="2" width="3.6" height="36" rx="1.8" fill="#5479b5"/><rect x="28.9" y="2" width="3.6" height="36" rx="1.8" fill="#5479b5"/><rect x="-29" y="0" width="58" height="29" rx="9" fill="url(#plyK)" stroke="#d3a978" stroke-width="1.2"/><path d="M-31 27.5 q31 9 62 0 v8 q-31 9 -62 0z" fill="url(#plyK)" stroke="#d3a978" stroke-width="1.2"/>`;
   if(S.look==='fach')return `<path d="M-27 2 q27 -5 54 0 l-2 25 q-25 5 -50 0z" fill="#3c9cf0" stroke="#1e6fc2" stroke-width="1.6"/><path d="M-31 27 q31 11 62 0 l-1 9 q-30 11 -60 0z" fill="#2584dc" stroke="#1a64b3" stroke-width="1.6"/><ellipse cx="0" cy="34.5" rx="7" ry="2.4" fill="#1a5aa0"/>`;
   return `<rect x="-30" y="0" width="60" height="30" rx="9" fill="#efcf98" stroke="#6b8dc2" stroke-width="2"/><rect x="-31" y="27" width="62" height="10" rx="5" fill="#e3bd7c" stroke="#6b8dc2" stroke-width="2"/>`;
 }
@@ -1244,6 +1250,7 @@ function topSVG(D,col){
   if(S.look==='custom'){const tc=CC().table;return `<rect x="${-hw+3}" y="${-hd+5}" width="${D.w}" height="${D.d}" rx="5" fill="rgba(20,30,50,.18)"/><rect x="${-hw}" y="${-hd}" width="${D.w}" height="${D.d}" rx="5" fill="url(#cTable)" stroke="${shade(tc,-.32)}" stroke-width="2.2"/>`+(two?`<line x1="0" y1="${-hd+5}" x2="0" y2="${hd-5}" stroke="${shade(tc,-.25)}" stroke-width="1.4"/>`:'');}
   if(S.look==='disco')return `<rect x="${-hw}" y="${-hd}" width="${D.w}" height="${D.d}" rx="6" fill="none" stroke="${col}" stroke-width="12" opacity=".25"/><rect x="${-hw}" y="${-hd}" width="${D.w}" height="${D.d}" rx="6" fill="#1a1036" stroke="${col}" stroke-width="2.8"/>`+(two?`<line x1="0" y1="${-hd+8}" x2="0" y2="${hd-8}" stroke="${col}" stroke-width="1.2" opacity=".5"/>`:'');
   if(S.look==='schlicht')return `<rect x="${-hw}" y="${-hd}" width="${D.w}" height="${D.d}" fill="#fff" stroke="#333" stroke-width="1.3"/>`+(two?`<line x1="0" y1="${-hd+8}" x2="0" y2="${hd-8}" stroke="#999" stroke-width="1"/>`:'');
+  if(S.look==='klasse')return `<rect x="${-hw+3}" y="${-hd+5}" width="${D.w}" height="${D.d}" rx="4" fill="rgba(80,55,20,.14)"/><rect x="${-hw}" y="${-hd}" width="${D.w}" height="${D.d}" rx="4" fill="url(#beechK)" stroke="#cb9b66" stroke-width="1.6"/><rect x="${-hw}" y="${-hd}" width="${D.w}" height="${D.d}" rx="4" fill="url(#grainK)"/>`+(two?`<line x1="0" y1="${-hd+4}" x2="0" y2="${hd-4}" stroke="#cfa06b" stroke-width="1.3"/>`:'');
   if(S.look==='fach')return `<rect x="${-hw+3}" y="${-hd+5}" width="${D.w}" height="${D.d}" rx="4" fill="rgba(15,30,70,.25)"/><rect x="${-hw}" y="${-hd}" width="${D.w}" height="${D.d}" rx="4" fill="#f2f4f6" stroke="#98a2ad" stroke-width="3.2"/><rect x="${-hw+6}" y="${-hd+6}" width="${D.w-12}" height="${D.d-12}" rx="2" fill="none" stroke="#dfe4e9" stroke-width="1.4"/>`+(two?`<line x1="0" y1="${-hd+2}" x2="0" y2="${hd-2}" stroke="#b5bec8" stroke-width="2"/>`:'');
   if(S.look==='foto')return `<g filter="url(#ds)"><rect x="${-hw}" y="${-hd}" width="${D.w}" height="${D.d}" rx="4" fill="url(#topF)"/></g><rect x="${-hw}" y="${-hd}" width="${D.w}" height="${D.d}" rx="4" fill="url(#grain)"/><rect x="${-hw}" y="${-hd}" width="${D.w}" height="${D.d}" rx="4" fill="none" stroke="#b98f58" stroke-width="1.4"/><line x1="${-hw+4}" y1="${-hd+2}" x2="${hw-4}" y2="${-hd+2}" stroke="#fff6e4" stroke-width="2" opacity=".8"/><line x1="${-hw+5}" y1="${hd+2.5}" x2="${hw-5}" y2="${hd+2.5}" stroke="#3e64a6" stroke-width="3"/>`+(two?`<line x1="0" y1="${-hd+3}" x2="0" y2="${hd-3}" stroke="#c9a46e" stroke-width="1.2"/>`:'');
   return `<rect x="${-hw+3}" y="${-hd+5}" width="${D.w}" height="${D.d}" rx="7" fill="rgba(40,70,120,.13)"/><rect x="${-hw}" y="${-hd}" width="${D.w}" height="${D.d}" rx="7" fill="url(#topM)" stroke="#dcc196" stroke-width="1.8"/>`+(two?`<line x1="0" y1="${-hd+6}" x2="0" y2="${hd-6}" stroke="#e2cba3" stroke-width="1.4"/>`:'');
@@ -1509,6 +1516,31 @@ function roomSVG(c){
     s+=`<rect x="${px}" y="${py}" width="${pw}" height="${ph}" fill="#fff" stroke="#111" stroke-width="2.8"/><text x="${px+pw/2}" y="${py+ph/2+7}" text-anchor="middle" font-family="Figtree,Arial,sans-serif" font-weight="800" font-size="18" fill="#111" letter-spacing="2" ${tr(px+pw/2,py+ph/2)}>PULT</text>`;
     return s;
   }
+  if(L==='klasse'){
+    s+=`<rect width="${W}" height="${H}" fill="url(#brickK)"/><rect x="0" y="0" width="${WALL}" height="${H}" fill="#f1efe9"/><rect x="${WALL}" y="${WALL}" width="${W-2*WALL}" height="${H-2*WALL}" fill="url(#linoM)"/><rect x="${WALL}" y="${WALL}" width="${W-2*WALL}" height="${H-2*WALL}" fill="none" stroke="rgba(80,60,30,.14)" stroke-width="4"/>`;
+    // Fenster links: blaue Rahmen, Fensterbank, blaue Heizkörper, dunkelblaue Vorhänge an den Übergängen
+    wins.forEach(([y,h])=>{s+=`<rect x="0" y="${y}" width="${WALL}" height="${h}" fill="#d9ecf8"/><rect x="1.5" y="${y}" width="${WALL-3}" height="${h}" fill="none" stroke="#2e5ca0" stroke-width="3"/><line x1="1.5" y1="${y+h/2}" x2="${WALL-1.5}" y2="${y+h/2}" stroke="#2e5ca0" stroke-width="2.5"/><rect x="${WALL}" y="${y-4}" width="9" height="${h+8}" rx="1.5" fill="#e4e0d8" stroke="#c9c3b8"/><rect x="${WALL+11}" y="${y+h*0.12}" width="7" height="${h*0.76}" rx="2" fill="#28489a"/>`;});
+    const cuts=[wins[0][0]-6,...wins.slice(1).map(([y],i)=>(wins[i][0]+wins[i][1]+y)/2),wins[4][0]+wins[4][1]+6];
+    cuts.forEach(cy=>{s+=`<path d="M${WALL} ${cy-40} q24 8 28 40 q-4 32 -28 40z" fill="url(#curtK)" stroke="#132a62" stroke-width="1.2"/><path d="M${WALL+6} ${cy-30} q10 30 0 60M${WALL+13} ${cy-22} q8 22 0 44" fill="none" stroke="#3a5eb0" stroke-width="1.4" opacity=".7"/><rect x="${WALL+18}" y="${cy-4}" width="12" height="8" rx="3" fill="#d6aa5a"/>`;});
+    // Tür in Holzfarbe
+    s+=`<rect x="${dx0}" y="${dy0-8}" width="${WALL}" height="${dh+16}" fill="#7d8796"/><rect x="${dx0}" y="${dy0}" width="${WALL}" height="${dh}" fill="#d6e3f4"/><path d="M${dx0-dh} ${dy0} A${dh} ${dh} 0 0 0 ${dx0} ${dy0+dh}" fill="none" stroke="#b9a27a" stroke-width="1.6" stroke-dasharray="7 6"/><line x1="${dx0}" y1="${dy0}" x2="${dx0-dh}" y2="${dy0}" stroke="#d9a35a" stroke-width="7" stroke-linecap="round"/>`;
+    // Kreidetafel und Regalnische an der rechten Wand
+    const ka=Math.round(H*0.34),kb=Math.round(H*0.6),na=kb+40,nb=Math.min(H-WALL-60,na+Math.round(H*0.14));
+    s+=`<rect x="${dx0-9}" y="${ka-6}" width="9" height="${kb-ka+12}" fill="#a06c3c"/><rect x="${dx0-7}" y="${ka}" width="7" height="${kb-ka}" fill="#2b4a3c"/>`;
+    {const nd=Math.max(2,Math.round((nb-na)/70)),dh2=(nb-na)/nd;s+=`<rect x="${dx0-30}" y="${na}" width="30" height="${nb-na}" rx="2" fill="#f6f5f2" stroke="#b9bcc2" stroke-width="1.6"/>`;
+      for(let i=0;i<nd;i++){const y0=na+i*dh2;s+=`<rect x="${dx0-27}" y="${y0+3}" width="24" height="${dh2-6}" rx="1.5" fill="#fbfbfa" stroke="#d3d6db" stroke-width="1.2"/><rect x="${dx0-26}" y="${y0+dh2/2-7}" width="3" height="14" rx="1.5" fill="#8d939c"/>`;}}
+    // Tafelanlage vorne mit Uhr
+    s+=`<rect x="${bx-442}" y="7" width="206" height="26" rx="2" fill="#fbfcfd" stroke="#6f7680" stroke-width="2.5"/><rect x="${bx+236}" y="7" width="206" height="26" rx="2" fill="#fbfcfd" stroke="#6f7680" stroke-width="2.5"/><rect x="${bx-234}" y="4" width="468" height="42" rx="4" fill="#1d1f23" stroke="#111" stroke-width="2"/>`;
+    s+=`<text x="${bx}" y="32" text-anchor="middle" font-family="Figtree,Arial,sans-serif" font-weight="600" font-size="20" fill="#f1f3f6" ${tr(bx,25)}>${esc(c.name)} · ${date}</text>`;
+    s+=`<circle cx="${bx+500}" cy="${WALL/2}" r="13" fill="#fdfdfb" stroke="#bbb" stroke-width="2"/><line x1="${bx+500}" y1="${WALL/2}" x2="${bx+500}" y2="${WALL/2-8}" stroke="#222" stroke-width="2"/><line x1="${bx+500}" y1="${WALL/2}" x2="${bx+506}" y2="${WALL/2+2}" stroke="#222" stroke-width="2"/>`;
+    // Pult in Buche mit grünem Klassenbuch, iPad und Stiftehalter
+    s+=`<g transform="translate(${px+pw/2} ${py-28}) rotate(180)">${chairSVG(0,-18)}</g>`;
+    s+=`<rect x="${px+3}" y="${py+5}" width="${pw}" height="${ph}" rx="4" fill="rgba(80,55,20,.14)"/><rect x="${px}" y="${py}" width="${pw}" height="${ph}" rx="4" fill="url(#beechK)" stroke="#cb9b66" stroke-width="1.6"/><rect x="${px}" y="${py}" width="${pw}" height="${ph}" rx="4" fill="url(#grainK)"/><rect x="${px}" y="${py+ph-6}" width="${pw}" height="6" rx="2" fill="#cfa06b"/>`;
+    s+=`<rect x="${px+pw/2-21}" y="${py+18}" width="42" height="58" rx="2" fill="#2e7a4a" stroke="#235f39" stroke-width="1.5" transform="rotate(4 ${px+pw/2} ${py+47})"/><rect x="${px+pw-62}" y="${py+22}" width="34" height="48" rx="4" fill="#2b2f36" transform="rotate(-8 ${px+pw-45} ${py+46})"/><rect x="${px+pw-58}" y="${py+26}" width="26" height="40" rx="2" fill="#0f1114" transform="rotate(-8 ${px+pw-45} ${py+46})"/><circle cx="${px+42}" cy="${py+40}" r="11" fill="#40444c"/><circle cx="${px+39}" cy="${py+37}" r="2.4" fill="#dc463c"/><circle cx="${px+45}" cy="${py+38}" r="2.4" fill="#3c78c8"/><circle cx="${px+42}" cy="${py+44}" r="2.4" fill="#f0be3c"/>`;
+    // Rückwand: zwei Whiteboards, blauer Heizkörper
+    s+=`<rect x="${bx-250}" y="${H-28}" width="248" height="20" rx="2" fill="#fbfcfd" stroke="#8d96a3" stroke-width="2"/><rect x="${bx+2}" y="${H-28}" width="248" height="20" rx="2" fill="#fbfcfd" stroke="#8d96a3" stroke-width="2"/><rect x="${bx-170}" y="${H-WALL-9}" width="340" height="7" rx="2" fill="#28489a"/>`;
+    return s;
+  }
   if(L==='fach'){
     s+=`<rect width="${W}" height="${H}" fill="#e6eaef"/><rect x="${WALL}" y="${WALL}" width="${W-2*WALL}" height="${H-2*WALL}" fill="url(#linoF)"/><rect x="${WALL}" y="${WALL}" width="${W-2*WALL}" height="${H-2*WALL}" fill="none" stroke="rgba(15,30,70,.35)" stroke-width="4"/>`;
     wins.forEach(([y,h])=>{s+=`<rect x="0" y="${y}" width="${WALL}" height="${h}" fill="#dceefa"/><rect x="1.5" y="${y}" width="${WALL-3}" height="${h}" fill="none" stroke="#1d3c8c" stroke-width="3"/><rect x="${WALL}" y="${y-3}" width="8" height="${h+6}" rx="1.5" fill="#fbfcfd" stroke="#c9d0d8"/>`;});
@@ -1603,7 +1635,7 @@ function renderRoom(anim){
   if(pickKey){const p=seatPos(c,pickKey);if(p)s+=`<circle class="ring" cx="${p.x}" cy="${p.y}" r="78"/>`;}
   s+='</g>';
   $('roomG').innerHTML=s;
-  ['modern','schlicht','foto','fach','disco','custom'].forEach(l=>svg.classList.toggle('look-'+l,S.look===l));svg.classList.toggle('dark-top',cust&&lum(CC().table)<0.5);
+  ['modern','klasse','schlicht','foto','fach','disco','custom'].forEach(l=>svg.classList.toggle('look-'+l,S.look===l));svg.classList.toggle('dark-top',cust&&lum(CC().table)<0.5);
   svg.classList.toggle('mode-tische',mode==='tische');svg.classList.toggle('mode-schueler',mode==='schueler');
   sizeRoom();
   if(anim){svg.classList.remove('shuffle');requestAnimationFrame(()=>{svg.classList.add('shuffle');setTimeout(()=>svg.classList.remove('shuffle'),500);});}
@@ -1993,7 +2025,7 @@ function buildPrint(){
   $('printSheet').innerHTML=`<div class="ph"><b>${esc(c.name)}</b><span>Sitzplan · ${view} · ${c.students.length} Schüler · ${d}</span></div>`+xml;
 }
 function renderPrintMode(){const m=S.printMode||'plain';document.querySelectorAll('[data-pm]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.pm===m)));
-  $('printModeHint').textContent=m==='plain'?'Weiß mit schwarzen Linien und gut lesbaren Namen. Spart Tinte.':`Im aktuellen Aussehen „${({modern:'Modern',schlicht:'Schlicht',fach:'Fachraum',custom:'Eigene',disco:'Disco'})[S.look]||S.look}“. Braucht mehr Farbe.`;}
+  $('printModeHint').textContent=m==='plain'?'Weiß mit schwarzen Linien und gut lesbaren Namen. Spart Tinte.':`Im aktuellen Aussehen „${({klasse:'Klassenraum',schlicht:'Schlicht',fach:'Fachraum',custom:'Eigene',disco:'Disco'})[S.look]||S.look}“. Braucht mehr Farbe.`;}
 $('printMode').onclick=e=>{const b=e.target.closest('[data-pm]');if(!b)return;S.printMode=b.dataset.pm;save();renderPrintMode();};
 document.body.appendChild($('printSheet'));window.addEventListener('beforeprint',buildPrint);
 $('btnPrint').onclick=()=>{
