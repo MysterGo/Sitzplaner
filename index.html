@@ -2639,15 +2639,15 @@ function table(t,D){const k=t.k||1,w=D.w*k,d=D.d*k;
     cyl('metal',BLUE,[xs[0],128,zf],[xs[xs.length-1],128,zf],1.6,8);});}
 let NAMES=[],NROWS=8,ROWREF={};const rowKey=(p,f)=>Math.round(Math.atan2(f[0],f[2])*20)+'|'+Math.round((p[0]*f[0]+p[2]*f[2])/70);
 function nameTex(){const cols=4,rows=NROWS,CW=512,CHh=256;
-  const c=cnv(CW*cols,CHh*rows,x=>{NAMES.forEach((n,i)=>{const cx=(i%cols)*CW,cy=(i/cols|0)*CHh;x.fillStyle=THEME==='fach'?'#1d55a8':'#ffffff';x.fillRect(cx,cy,CW,CHh);
+  const c=cnv(CW*cols,CHh*rows,x=>{NAMES.forEach((n,i)=>{const cx=(i%cols)*CW,cy=(i/cols|0)*CHh;x.fillStyle='#ffffff';x.fillRect(cx,cy,CW,CHh);
     let fs=190;const F=()=>x.font=`800 ${fs}px Figtree,Arial,sans-serif`;F();while(x.measureText(n.name).width>CW-24&&fs>40){fs-=4;F();}
-    x.fillStyle=THEME==='fach'?'#ffffff':'#000000';x.textAlign='center';x.textBaseline='middle';x.fillText(n.name,cx+CW/2,cy+CHh/2+8);});});
+    x.fillStyle=THEME==='fach'?'#12407f':'#000000';x.textAlign='center';x.textBaseline='middle';x.fillText(n.name,cx+CW/2,cy+CHh/2+8);});});
   if(TEX.names)gl.deleteTexture(TEX.names);TEX.names=mkTex(c,false);need=true;return{cols,rows};}
 function nameUV(i){const cols=4,rows=NROWS,u0=(i%cols)/cols,u1=u0+1/cols,v0=(i/cols|0)/rows,v1=v0+1/rows,e=.002;return[u0+e,u1-e,v0+e,v1-e];}
 const PAL=[[84,124,186],[120,160,215],[62,98,164],[150,185,230],[232,218,192],[214,194,160],[246,244,239],[201,166,122],[178,138,96],[160,190,222],[226,206,176],[104,142,202]];
 const PW=118,PH=54,PB=165,PT=PB+PH;
 function plaque(name,zP){const i=NAMES.length;NAMES.push({name});
-    withT(tr(0,PB+PH/2,zP),()=>withT(rotX(-PI/2),()=>rslab('plate',THEME==='fach'?C(29,85,168):C(255,255,255),PW,PH,3,13,7)));
+    withT(tr(0,PB+PH/2,zP),()=>withT(rotX(-PI/2),()=>rslab('plate',C(255,255,255),PW,PH,3,13,7)));
   const [u0,u1,v0,v1]=nameUV(i),x0=-PW/2+7,x1=PW/2-7,y0=PB+3,y1=PT-3;
   quad('names',[1,1,1],[x0,y0,zP+.35],[x1,y0,zP+.35],[x1,y1,zP+.35],[x0,y1,zP+.35],[[u1,v1],[u0,v1],[u0,v0],[u1,v0]],[0,0,1]);
   quad('names',[1,1,1],[x1,y0,zP-3.35],[x0,y0,zP-3.35],[x0,y1,zP-3.35],[x1,y1,zP-3.35],[[u1,v1],[u0,v1],[u0,v0],[u1,v0]],[0,0,-1]);}
