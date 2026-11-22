@@ -3173,7 +3173,7 @@ function play3D(){
     if(g.phase==='land'&&performance.now()-g.land>1500)nextThrow();
     if(g.msg)g.msg.time+=dt;
     // Kamera
-    let E,T;if(g.phase==='aim'||g.phase==='over'){const y=g.cy,pc=g.cp,z=g.zoom;E=[g.start[0]-Math.sin(y)*(40+150*z),g.start[1]+40+130*z,g.start[2]-Math.cos(y)*(40+150*z)];T=[g.start[0]+Math.sin(y)*520,g.start[1]-90+pc*700,g.start[2]+Math.cos(y)*520];g.camE=null;}
+    let E,T;if(g.phase==='aim'||g.phase==='over'){const y=g.cy,pc=g.cp,z=g.zoom;E=[g.start[0]-Math.sin(y)*190*z,g.start[1]+170*z,g.start[2]-Math.cos(y)*190*z];T=[g.start[0]+Math.sin(y)*520,g.start[1]-90+pc*700,g.start[2]+Math.cos(y)*520];g.camE=null;}
     else{const v=pl.v,h=Math.hypot(v[0],v[2])||1,want=[pl.p[0]-v[0]/h*170*g.zoom,Math.max(60,pl.p[1]+90*g.zoom),pl.p[2]-v[2]/h*170*g.zoom];g.camE=g.camE?g.camE.map((x,i)=>x+(want[i]-x)*Math.min(1,dt*(g.phase==='land'?1.5:5))):want;E=g.camE;T=pl.p.slice();}
     SP3D.view(E,T,1.2);
     const v=g.phase==='aim'?vel():pl.v,yawP=Math.atan2(v[0],v[2]),pit=Math.atan2(v[1],Math.hypot(v[0],v[2]));
