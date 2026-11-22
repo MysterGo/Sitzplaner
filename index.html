@@ -3120,7 +3120,7 @@ function m4(pos,yaw,pitch,sc){const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.co
   return new Float32Array([k*cy,0,-k*sy,0, -k*sy*sp,k*cp,-k*cy*sp,0, k*sy*cp,k*sp,k*cy*cp,0, pos[0],pos[1],pos[2],1]);}
 function play3D(){
   const c=cur();closePops();$('v3d').hidden=false;$('v3dTitle').textContent='Papierflieger 3D · '+(c.name||'Klasse');
-  document.querySelector('.v3dbar .seg').hidden=true;$('v3dHint').textContent='Neben dem Flieger ziehen = umsehen · am Flieger ziehen = spannen · Esc beendet';
+  document.querySelector('.v3dbar .seg').hidden=true;$('v3dHint').textContent='Neben dem Flieger ziehen = umsehen · am Flieger ziehen = spannen · Mausrad/zwei Finger = zoomen · Esc beendet';
   if(SP3D===null){try{SP3D=sp3dCreate($('v3dGl'),$('v3dOv'))||false;}catch(e){console.error(e);SP3D=false;}}
   if(!SP3D){if(!$('v3dStage').querySelector('.v3dmsg'))$('v3dStage').insertAdjacentHTML('beforeend','<div class="v3dmsg">Dieses Gerät kann leider keine 3D-Grafik (WebGL 2) anzeigen.</div>');return;}
   SP3D.onPick(null);SP3D.select(null);SP3D.show(plan3D(c),c.name,S.look);
@@ -3132,7 +3132,7 @@ function play3D(){
   const occ=I.seats.filter(q=>q.full);const pool=occ.length?occ:I.seats;
   const frontZ=Math.min(...boxes.map(b=>b.z0)),side=S.look==='fach'?-1:1;
   const TEA={x:(R.X0+R.X1)/2,z:Math.max(R.Z0+120,frontZ-70),dir:1,wait:0,face:PI/2,look:PI/2,sp:70};
-  const g={n:0,score:0,streak:0,hits:0,phase:'aim',msg:null,best:+(localStorage.getItem('pf.best3d')||0)};G3=g;
+  const g={zoom:1,n:0,score:0,streak:0,hits:0,phase:'aim',msg:null,best:+(localStorage.getItem('pf.best3d')||0)};G3=g;
   const near=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
   function nextThrow(){g.n++;if(g.n>10){g.phase='over';g.msg={t:'Stunde vorbei! '+g.score+' Punkte',k:'over',time:99};if(g.score>g.best){g.best=g.score;try{localStorage.setItem('pf.best3d',g.best);}catch(e){}}return;}
     const q=pool[Math.floor(Math.random()*pool.length)];g.q=q;g.name=(c.seats[q.key]&&student(c,c.seats[q.key])||{}).name||'Du';
@@ -3147,12 +3147,14 @@ function play3D(){
   function finish(kind,text){let pts=0;if(kind==='hit'){g.streak++;g.hits++;pts=3+Math.min(2,g.streak-1);}else{g.streak=0;if(kind==='near')pts=1;if(kind==='teacher')pts=-2;if(kind==='seen')pts=-1;}
     g.score=Math.max(0,g.score+pts);g.phase='land';g.msg={t:text+(pts>0?'  +'+pts:pts<0?'  −'+(-pts):''),k:kind,time:0};g.land=performance.now();}
   const cvs=SP3D.canvas,pt=e=>{const r=cvs.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top,r.height];};
-  const pd=e=>{if(g.phase==='over'){g.n=0;g.score=0;g.streak=0;g.hits=0;g.msg=null;nextThrow();return;}if(g.phase!=='aim')return;cvs.setPointerCapture(e.pointerId);const [x,y,h]=pt(e),r=cvs.getBoundingClientRect(),k=cvs.width/r.width,pp=g.planeScr;
+  const PT=new Map();let pinch=null;
+  const pd=e=>{PT.set(e.pointerId,[e.clientX,e.clientY]);if(PT.size===2){const[a,b]=[...PT.values()];pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),z:g.zoom};if(g.drag){g.drag=null;g.yaw=g.cy;}return;}if(PT.size>2)return;if(g.phase==='over'){g.n=0;g.score=0;g.streak=0;g.hits=0;g.msg=null;nextThrow();return;}if(g.phase!=='aim')return;cvs.setPointerCapture(e.pointerId);const [x,y,h]=pt(e),r=cvs.getBoundingClientRect(),k=cvs.width/r.width,pp=g.planeScr;
     const sl=pp&&Math.hypot(x*k-pp[0],y*k-pp[1])<110*k;g.drag={sl,x0:x,y0:y,x,y,h,p:0,cy0:g.cy,cp0:g.cp};};
-  const pm=e=>{if(!g.drag)return;const [x,y]=pt(e),d=g.drag;d.x=x;d.y=y;if(d.sl){d.p=Math.max(0,Math.min(1,Math.hypot(x-d.x0,Math.max(0,y-d.y0))/(d.h*.42)));g.yaw=g.cy-(x-d.x0)*.0025;}else{g.cy=d.cy0-(x-d.x0)*.005;g.cp=Math.max(-.35,Math.min(.45,d.cp0-(y-d.y0)*.004));g.yaw=g.cy;}};
-  const pu=()=>{if(!g.drag)return;const d=g.drag;if(!d.sl||d.p<.04){g.drag=null;g.yaw=g.cy;return;}g.pl.v=vel();g.drag=null;g.phase='fly';g.pl.t=0;};
-  cvs.addEventListener('pointerdown',pd);cvs.addEventListener('pointermove',pm);cvs.addEventListener('pointerup',pu);
-  g.off=()=>{cvs.removeEventListener('pointerdown',pd);cvs.removeEventListener('pointermove',pm);cvs.removeEventListener('pointerup',pu);};
+  const pm=e=>{if(PT.has(e.pointerId))PT.set(e.pointerId,[e.clientX,e.clientY]);if(pinch&&PT.size===2){const[a,b]=[...PT.values()];g.zoom=Math.max(.35,Math.min(2.6,pinch.z*pinch.d/Math.max(20,Math.hypot(a[0]-b[0],a[1]-b[1]))));return;}if(!g.drag)return;const [x,y]=pt(e),d=g.drag;d.x=x;d.y=y;if(d.sl){d.p=Math.max(0,Math.min(1,Math.hypot(x-d.x0,Math.max(0,y-d.y0))/(d.h*.42)));g.yaw=g.cy-(x-d.x0)*.0025;}else{g.cy=d.cy0-(x-d.x0)*.005;g.cp=Math.max(-.35,Math.min(.45,d.cp0-(y-d.y0)*.004));g.yaw=g.cy;}};
+  const pu=e=>{PT.delete(e.pointerId);if(PT.size<2)pinch=null;if(!g.drag)return;const d=g.drag;if(!d.sl||d.p<.04){g.drag=null;g.yaw=g.cy;return;}g.pl.v=vel();g.drag=null;g.phase='fly';g.pl.t=0;};
+  const wh=e=>{e.preventDefault();g.zoom=Math.max(.35,Math.min(2.6,g.zoom*(e.deltaY>0?1.1:.91)));};
+  cvs.addEventListener('pointerdown',pd);cvs.addEventListener('pointermove',pm);cvs.addEventListener('pointerup',pu);cvs.addEventListener('pointercancel',pu);cvs.addEventListener('wheel',wh,{passive:false});
+  g.off=()=>{cvs.removeEventListener('pointerdown',pd);cvs.removeEventListener('pointermove',pm);cvs.removeEventListener('pointerup',pu);cvs.removeEventListener('pointercancel',pu);cvs.removeEventListener('wheel',wh);};
   let last=performance.now();
   function tick(){const now=performance.now(),dt=Math.min(.033,(now-last)/1000);last=now;
     // Lehrkraft
@@ -3171,8 +3173,8 @@ function play3D(){
     if(g.phase==='land'&&performance.now()-g.land>1500)nextThrow();
     if(g.msg)g.msg.time+=dt;
     // Kamera
-    let E,T;if(g.phase==='aim'||g.phase==='over'){const y=g.cy,pc=g.cp;E=[g.start[0]-Math.sin(y)*190,g.start[1]+170,g.start[2]-Math.cos(y)*190];T=[g.start[0]+Math.sin(y)*520,g.start[1]-90+pc*700,g.start[2]+Math.cos(y)*520];g.camE=null;}
-    else{const v=pl.v,h=Math.hypot(v[0],v[2])||1,want=[pl.p[0]-v[0]/h*170,Math.max(60,pl.p[1]+90),pl.p[2]-v[2]/h*170];g.camE=g.camE?g.camE.map((x,i)=>x+(want[i]-x)*Math.min(1,dt*(g.phase==='land'?1.5:5))):want;E=g.camE;T=pl.p.slice();}
+    let E,T;if(g.phase==='aim'||g.phase==='over'){const y=g.cy,pc=g.cp,z=g.zoom;E=[g.start[0]-Math.sin(y)*(40+150*z),g.start[1]+40+130*z,g.start[2]-Math.cos(y)*(40+150*z)];T=[g.start[0]+Math.sin(y)*520,g.start[1]-90+pc*700,g.start[2]+Math.cos(y)*520];g.camE=null;}
+    else{const v=pl.v,h=Math.hypot(v[0],v[2])||1,want=[pl.p[0]-v[0]/h*170*g.zoom,Math.max(60,pl.p[1]+90*g.zoom),pl.p[2]-v[2]/h*170*g.zoom];g.camE=g.camE?g.camE.map((x,i)=>x+(want[i]-x)*Math.min(1,dt*(g.phase==='land'?1.5:5))):want;E=g.camE;T=pl.p.slice();}
     SP3D.view(E,T,1.2);
     const v=g.phase==='aim'?vel():pl.v,yawP=Math.atan2(v[0],v[2]),pit=Math.atan2(v[1],Math.hypot(v[0],v[2]));
     const L=[{g:'bin',m:m4([g.bin[0],0,g.bin[1]],0,0,1)},{g:'teacher',m:m4([TEA.x,0,TEA.z],PI/2-TEA.face,0,1)}];
@@ -3191,8 +3193,7 @@ function play3D(){
     o.fillStyle='#1f2937';o.textAlign='left';o.font=F(15);o.fillText(`Wurf ${Math.min(10,g.n)}/10   Punkte ${g.score}`,24*dpr,38*dpr);o.font=F(13);o.fillStyle='#5b6577';o.fillText(`Serie ${g.streak}   Rekord ${g.best}`,24*dpr,60*dpr);
     o.fillStyle='#2a5cad';o.fillText(g.wind?`Wind ${side>0?'→':'←'} ${g.wind<70?'mittel':'stark'}`:'Fenster zu, kein Wind',24*dpr,84*dpr);
     if(g.phase==='aim'){o.textAlign='center';o.font=F(18);o.lineWidth=5*dpr;o.strokeStyle='#fff';const t=`${g.name} wirft`;o.strokeText(t,W/2,40*dpr);o.fillStyle='#2a5cad';o.fillText(t,W/2,40*dpr);
-      if(g.drag&&g.drag.sl){o.font=F(15);o.fillStyle='#7a4f00';o.fillText(Math.round(g.drag.p*100)+' %',W/2,H-60*dpr);}
-      else if(!g.drag&&g.planeScr){o.font=F(13);o.lineWidth=4*dpr;o.strokeStyle='#fff';const t='Flieger ziehen = spannen · daneben ziehen = umsehen';o.strokeText(t,W/2,H-60*dpr);o.fillStyle='#7a4f00';o.fillText(t,W/2,H-60*dpr);}}
+      if(g.drag&&g.drag.sl){o.font=F(15);o.fillStyle='#7a4f00';o.fillText(Math.round(g.drag.p*100)+' %',W/2,H-60*dpr);}}
     if(g.msg&&g.msg.time<1.5||g.phase==='over'){const m=g.msg,col={hit:'#2e8657',near:'#d9922b',over:'#2a5cad'}[m.k]||'#c0482a';o.textAlign='center';o.font=F(g.phase==='over'?36:42);o.lineWidth=8*dpr;o.strokeStyle='#fff';o.strokeText(m.t,W/2,H/2);o.fillStyle=col;o.fillText(m.t,W/2,H/2);
       if(g.phase==='over'){o.font=F(16);o.fillStyle='#1f2937';o.strokeText('Tippen für eine neue Runde',W/2,H/2+40*dpr);o.fillText('Tippen für eine neue Runde',W/2,H/2+40*dpr);}}}
   nextThrow();SP3D.game({tick,hook});
