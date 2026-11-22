@@ -2895,11 +2895,16 @@ function build(){
     withT(tr(0,0,-62),()=>chair());});}
   }
   // Tische, Stühle, Monster
-  ROWREF={};{const acc={};P.tables.forEach(t=>{const D=DIM[t.type];D.seats.forEach((sx,i)=>{if(!P.seats[t.id+':'+i])return;const vC=D.d/2+CH/2+6,pl=place(t,sx,vC),pv=pl.p([0,PB,-10]),f=pl.n([0,0,1]),k=rowKey(pv,f);(acc[k]=acc[k]||[]).push(pv);});});
-    for(const k in acc){const L=acc[k];ROWREF[k]=[L.reduce((a,p)=>a+p[0],0)/L.length,L.reduce((a,p)=>a+p[2],0)/L.length];}}
+  ROWREF={};{const all=[];P.tables.forEach(t=>{const D=DIM[t.type];D.seats.forEach((sx,i)=>{const vC=D.d/2+CH/2+6,pl=place(t,sx,vC),pv=pl.p([0,PB,-10]),f=pl.n([0,0,1]),a=Math.atan2(f[0],f[2]);
+      all.push({key:t.id+':'+i,pv,a,dep:pv[0]*f[0]+pv[2]*f[2],lat:pv[0]*f[2]-pv[2]*f[0]});});});
+    // Gruppen: gleiche Blickrichtung, gleiche Tiefe (Reihe/Tischgruppe), seitlich zusammenhängend
+    const used=new Set();all.forEach(s0=>{if(used.has(s0.key))return;const g=[s0];used.add(s0.key);let grew=true;
+      while(grew){grew=false;all.forEach(o=>{if(used.has(o.key))return;const da=Math.abs(((o.a-s0.a+3*PI)%(2*PI))-PI);if(da>.06)return;
+        if(g.some(m=>Math.abs(m.dep-o.dep)<45&&Math.abs(m.lat-o.lat)<260)){g.push(o);used.add(o.key);grew=true;}});}
+      const c=[g.reduce((a,p)=>a+p.pv[0],0)/g.length,g.reduce((a,p)=>a+p.pv[2],0)/g.length];g.forEach(m=>ROWREF[m.key]=c);});}
   const TBL=THEME==='fach'?tableF:table,CHR=THEME==='fach'?chairF:chair;
   P.tables.forEach(t=>{const D={...DIM[t.type],type:t.type};TBL(t,D);
-    D.seats.forEach((sx,i)=>{const vC=D.d/2+CH/2+6,name=P.seats[t.id+':'+i];withT(place(t,sx,vC),()=>{CHR();{const zP=(t.k||1)*(vC-D.d/2)+12,pv=T.p([0,PB,-10]),f=T.n([0,0,1]);SEATS.push({key:t.id+':'+i,pv,rf:ROWREF[rowKey(pv,f)]||[pv[0]+f[0]*99,pv[2]+f[2]*99],off:zP+10,f,full:!!name,head:T.p([0,HS+110,-7])});}if(name){const zP=(t.k||1)*(vC-D.d/2)+12,pv=T.p([0,PB,-10]),f=T.n([0,0,1]),a0=Math.atan2(f[0],f[2]),rf=ROWREF[rowKey(pv,f)];BB=[pv[0],pv[1],pv[2],a0,rf[0],rf[1]];plaque(name,zP);BB=null;bust(name);}});});});
+    D.seats.forEach((sx,i)=>{const vC=D.d/2+CH/2+6,name=P.seats[t.id+':'+i];withT(place(t,sx,vC),()=>{CHR();{const zP=(t.k||1)*(vC-D.d/2)+12,pv=T.p([0,PB,-10]),f=T.n([0,0,1]);SEATS.push({key:t.id+':'+i,pv,rf:ROWREF[t.id+':'+i]||[pv[0]+f[0]*99,pv[2]+f[2]*99],off:zP+10,f,full:!!name,head:T.p([0,HS+110,-7])});}if(name){const zP=(t.k||1)*(vC-D.d/2)+12,pv=T.p([0,PB,-10]),f=T.n([0,0,1]),a0=Math.atan2(f[0],f[2]),rf=ROWREF[t.id+':'+i];BB=[pv[0],pv[1],pv[2],a0,rf[0],rf[1]];plaque(name,zP);BB=null;bust(name);}});});});
   nameTex();upload();renderShadows();need=true;}
 // ---------------- WebGL
 const VS=`#version 300 es
@@ -3011,11 +3016,11 @@ cv.addEventListener('wheel',e=>{e.preventDefault();cam.dist=Math.max(250,Math.mi
 if(document.fonts)document.fonts.load('800 100px Figtree').then(()=>{if(NAMES.length)nameTex();}).catch(()=>{});
 loadTex();
 return{show(P,kl,th){CUR=P;THEME=th==='fach'?'fach':'klasse';CLASSNAME=String(kl||'').slice(0,24)||'Klasse';if(TEX.chalk)gl.deleteTexture(TEX.chalk);TEX.chalk=mkTex(TEXSRC.chalk(),false);build();setCam(cam.kind||'lehrer');need=true;if(!running){running=true;requestAnimationFrame(loop);}},
-  cam(k){setCam(k);},stop(){running=false;},update(P){CUR=P;build();need=true;},select(k){SEL=k;need=true;},onPick(f){onPick=f;}};
+  cam(k){setCam(k);},stop(){running=false;},update(P){CUR=P;build();need=true;},groups(){const m={};for(const k in ROWREF){const r=ROWREF[k].map(v=>Math.round(v)).join(',');(m[r]=m[r]||[]).push(k);}return Object.values(m).map(v=>v.length);},select(k){SEL=k;need=true;},onPick(f){onPick=f;}};
 }
 
 // ---------- 3D-Ansicht (Vertretungsansicht)
-let SP3D=null;
+let SP3D=null;window.__sp3d=()=>SP3D;
 function plan3D(c){const seats={};c.tables.forEach(t=>DIM[t.type].seats.forEach((_,i)=>{const sid=c.seats[t.id+':'+i],st=sid&&c.students.find(x=>x.id===sid);if(st&&st.name)seats[t.id+':'+i]=st.name;}));
   return{room:{w:c.room.w,h:c.room.h},tables:c.tables.map(t=>({id:t.id,type:t.type,x:t.x,y:t.y,r:t.r||0,k:t.k||1})),seats};}
 function open3D(){const c=cur(),v=$('v3d');closePops();v.hidden=false;$('v3dTitle').textContent='3D-Ansicht · '+(c.name||'Klasse');
