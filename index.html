@@ -198,6 +198,7 @@ button.mini.accent{background:var(--accent);border-color:var(--accent);color:#ff
 #ruleAddApart{padding:6px 12px;font-weight:800}
 .rules{display:flex;flex-direction:column;gap:5px}.rules:empty{display:none}
 .rule>span{flex:1;min-width:0}.rule{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:9px;padding:6px 6px 6px 10px;font-size:14px;font-weight:600}
+.grules{border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:8px 0}.grules summary{cursor:pointer;font-weight:700;font-size:14px}.grules .rules{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.grules .rulerow{display:flex;gap:6px;align-items:center;margin:6px 0}.grules .rulerow select{flex:1;min-width:0}.grules .rulerow button{padding:6px 12px;font-weight:800}.group.bad{outline:2px solid #e0703a;border-radius:10px}
 .rule i{font-style:normal;color:var(--muted);font-weight:500}.rule .x{margin-left:auto;border:0;padding:3px 8px;color:var(--muted);background:none;font-size:16px}
 .rule.bad{border-color:#e8b4a5;background:#fbeae5}
 .fav{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;border:1px solid var(--line);border-radius:10px;padding:7px 9px}
@@ -664,6 +665,12 @@ Finja</textarea>
           <button class="primary" id="btnGroups">Gruppen bilden</button>
           <label class="check"><input type="checkbox" id="showGroups" checked> Im Plan zeigen</label>
         </div>
+        <details class="grules" id="gRules"><summary>Regeln: wer nicht mit wem <span id="gRuleCount"></span></summary>
+          <div class="rules" id="gRuleList"></div>
+          <div class="rulerow"><select id="gA" aria-label="Schüler A"></select><span>↮</span><select id="gB" aria-label="Schüler B"></select><button id="gAdd" aria-label="Regel hinzufügen">+</button></div>
+          <label class="check"><input type="checkbox" id="gUseSeat"> Auch „nicht nebeneinander“ aus dem Sitzplan beachten</label>
+        </details>
+        <p class="hint" id="gRuleInfo"></p>
         <div class="glist" id="groupList"></div>
         <div class="pane" id="groupActions"></div>
         <div class="restore" id="restoreBox2" hidden></div>
@@ -857,7 +864,7 @@ let S,panel='plan',mode='schueler',pending=null,delConfirm=false,sel=new Set(),p
 
 /* ---------- Daten ---------- */
 function makeClass(name,names,nDouble,nSingle,tpl){
-  const c={id:uid(),name,students:names.map(n=>({id:uid(),name:n})),tables:[],seats:{},locked:[],template:tpl||'bloecke',picked:[],groups:[],gsize:4,favs:[null,null],rules:{apart:[],front:[],alt:false}};
+  const c={id:uid(),name,students:names.map(n=>({id:uid(),name:n})),tables:[],seats:{},locked:[],template:tpl||'bloecke',picked:[],groups:[],gsize:4,favs:[null,null],rules:{apart:[],front:[],alt:false,gapart:[],gseat:false}};
   for(let i=0;i<nDouble;i++)c.tables.push({id:uid(),type:'double',x:0,y:0,r:0});
   for(let i=0;i<nSingle;i++)c.tables.push({id:uid(),type:'single',x:0,y:0,r:0});
   applyTemplate(c,c.template);
@@ -925,7 +932,7 @@ function clean(c){
   for(const k of Object.keys(c.seats)){const v=c.seats[k];if(!keys.has(k)||!ids.has(v)||seen.has(v))delete c.seats[k];else seen.add(v);}
   c.locked=c.locked.filter(id=>seen.has(id));c.picked=c.picked.filter(id=>ids.has(id));
   c.groups=c.groups.map(g=>g.filter(id=>ids.has(id))).filter(g=>g.length);
-  c.rules.apart=c.rules.apart.filter(r=>Array.isArray(r)&&r.length===2&&ids.has(r[0])&&ids.has(r[1])&&r[0]!==r[1]);c.rules.front=[...new Set(c.rules.front.filter(id=>ids.has(id)))];
+  c.rules.apart=c.rules.apart.filter(r=>Array.isArray(r)&&r.length===2&&ids.has(r[0])&&ids.has(r[1])&&r[0]!==r[1]);c.rules.gapart=(c.rules.gapart||[]).filter(r=>Array.isArray(r)&&r.length===2&&ids.has(r[0])&&ids.has(r[1])&&r[0]!==r[1]);c.rules.gseat=!!c.rules.gseat;c.rules.front=[...new Set(c.rules.front.filter(id=>ids.has(id)))];
   if(!c.room)fitRoom(c,false);
 }
 // Alte Standardbestückung (Doppeltische) auf 30 Einzeltische umstellen, Sitzreihenfolge bleibt erhalten
@@ -1154,11 +1161,19 @@ function randomize(c){
   }
   c.seats=best;c.lastBreaks=ruleBreaks(c,best,geo);c.lastAlt=alt?altBreaks(c,best,geo,gmap):0;return true;
 }
+function groupPairs(c){const r=c.rules||{},L=[...(r.gapart||[])];if(r.gseat)(r.apart||[]).forEach(p=>L.push(p));return L;}
+function groupBreaks(c,groups){const gi={};groups.forEach((g,i)=>g.forEach(id=>gi[id]=i));return groupPairs(c).filter(([a,b])=>gi[a]!==undefined&&gi[a]===gi[b]).length;}
 function makeGroups(c,size){
   const ids=shuffle(c.students.map(s=>s.id)),n=ids.length;if(!n)return[];
   const r=n%size;let g=r===0?n/size:(size>2&&r>=size/2?Math.ceil(n/size):Math.floor(n/size));g=Math.max(1,g);
   const base=Math.floor(n/g),extra=n%g,out=[];let p=0;
   for(let i=0;i<g;i++){const s=base+(i<extra?1:0);out.push(ids.slice(p,p+s));p+=s;}
+  const pairs=groupPairs(c);if(!pairs.length||out.length<2)return out;
+  // Tauschen, bis keine verbotenen Paare mehr in einer Gruppe sind
+  let best=groupBreaks(c,out);
+  for(let it=0;it<4000&&best>0;it++){const i=Math.floor(Math.random()*out.length);let j=Math.floor(Math.random()*(out.length-1));if(j>=i)j++;
+    const a=Math.floor(Math.random()*out[i].length),b=Math.floor(Math.random()*out[j].length);[out[i][a],out[j][b]]=[out[j][b],out[i][a]];
+    const v=groupBreaks(c,out);if(v<=best)best=v;else [out[i][a],out[j][b]]=[out[j][b],out[i][a]];}
   return out;
 }
 
@@ -1715,7 +1730,13 @@ function renderPanel(){
   $('pickInfo').innerHTML=c.picked.length?`${c.picked.length} von ${nS} waren schon dran. <button class="link" id="pickReset">Zurücksetzen</button>`:'Alle sind noch im Topf.';
   $('btnPick').disabled=!nS||picking;
   document.querySelectorAll('#gsize [data-g]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.g===c.gsize)));
-  $('groupList').innerHTML=c.groups.map((g,i)=>`<div class="group"><strong><i style="background:${GCOL[i%GCOL.length]}">${i+1}</i>Gruppe ${i+1}</strong><span>${g.map(id=>esc((student(c,id)||{}).name||'')).join(', ')}</span></div>`).join('');
+  c.rules.gapart=c.rules.gapart||[];
+  {const opts='<option value="">Name …</option>'+[...c.students].sort((a,b)=>a.name.localeCompare(b.name,'de')).map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');['gA','gB'].forEach(id=>{const el=$(id),v=el.value;el.innerHTML=opts;if(v&&student(c,v))el.value=v;});
+   const nm=id=>esc((student(c,id)||{}).name||'?'),gi={};c.groups.forEach((g,i)=>g.forEach(id=>gi[id]=i));
+   $('gRuleList').innerHTML=c.rules.gapart.map(([a,b],i)=>`<div class="rule${gi[a]!==undefined&&gi[a]===gi[b]?' bad':''}"><span>${nm(a)} <i>↮</i> ${nm(b)}</span><button class="x" data-gdel="${i}" aria-label="Regel löschen">×</button></div>`).join('')||'<span class="hint">Noch keine Regel.</span>';
+   $('gUseSeat').checked=c.rules.gseat;const np=groupPairs(c).length;$('gRuleCount').textContent=np?`(${np})`:'';
+   const br=c.groups.length?groupBreaks(c,c.groups):0;$('gRuleInfo').textContent=c.groups.length&&np?(br?`${br} ${br===1?'Regel ließ':'Regeln ließen'} sich nicht einhalten.`:'Alle Regeln eingehalten.'):'';$('gRuleInfo').style.color=br?'#c0482a':'';}
+  $('groupList').innerHTML=c.groups.map((g,i)=>`<div class="group${(()=>{const L=groupPairs(c);return L.some(([a,b])=>g.includes(a)&&g.includes(b))?' bad':'';})()}"><strong><i style="background:${GCOL[i%GCOL.length]}">${i+1}</i>Gruppe ${i+1}</strong><span>${g.map(id=>esc((student(c,id)||{}).name||'')).join(', ')}</span></div>`).join('');
   const rb=c.savedLayout?`<strong>Ursprüngliche Sitzordnung gespeichert</strong><p class="hint">Vor dem Umsetzen der Gruppen wurde die alte Sitzordnung gesichert.</p><div class="row"><button class="primary" data-act="restoreLayout">Wiederherstellen</button><button data-act="dropLayout">Verwerfen</button></div>`:'';
   ['restoreBox','restoreBox2'].forEach(id=>{$(id).hidden=!rb;$(id).innerHTML=rb;});
   $('groupActions').innerHTML=c.groups.length?`<div class="selbox"><strong>Sitzordnung anpassen</strong><button class="primary" id="seatGroups">Namen gruppenweise setzen</button><button class="primary" id="tablesGroups">Passende Tische stellen</button><p class="hint">Gruppenweise setzen: Die Tische bleiben stehen, jede Gruppe sitzt beieinander. Passende Tische: ${c.gsize===2?'Jedes Paar bekommt einen Doppeltisch.':'Jede Gruppe bekommt einen eigenen Gruppentisch.'}</p></div><div class="row"><button id="copyGroups">Liste kopieren</button><button id="clearGroups">Gruppen auflösen</button></div>`:'';
@@ -1851,6 +1872,10 @@ function placeOn(c,sid,key){
 
 /* ---------- Bedienelemente ---------- */
 document.querySelectorAll('[data-panel]').forEach(b=>b.onclick=()=>setPanel(b.dataset.panel));
+$('gAdd').onclick=()=>{const c=cur(),a=$('gA').value,b=$('gB').value;if(!a||!b||a===b){toast('Bitte zwei verschiedene Namen wählen.');return;}
+  if(c.rules.gapart.some(([x,y])=>(x===a&&y===b)||(x===b&&y===a))){toast('Diese Regel gibt es schon.');return;}c.rules.gapart.push([a,b]);$('gA').value='';$('gB').value='';commit();};
+$('gRuleList').onclick=e=>{const b=e.target.closest('[data-gdel]');if(!b)return;const c=cur();c.rules.gapart.splice(+b.dataset.gdel,1);commit();};
+$('gUseSeat').onchange=e=>{cur().rules.gseat=e.target.checked;commit();};
 $('ruleAddApart').onclick=()=>{const c=cur(),a=$('ruleA').value,b=$('ruleB').value;if(!a||!b||a===b){toast('Bitte zwei verschiedene Namen wählen.');return;}
   if(c.rules.apart.some(([x,y])=>(x===a&&y===b)||(x===b&&y===a))){toast('Diese Regel gibt es schon.');return;}c.rules.apart.push([a,b]);$('ruleA').value='';$('ruleB').value='';rulePop(false);commit();};
 $('ruleAddFront').onclick=()=>{const c=cur(),f=$('ruleF').value;if(!f){toast('Bitte einen Namen wählen.');return;}if(!c.rules.front.includes(f))c.rules.front.push(f);$('ruleF').value='';rulePop(false);commit();};
@@ -1918,7 +1943,7 @@ $('clearNo').onclick=()=>{$('clearAsk').hidden=true;};
 $('btnClearList2').onclick=()=>{const c=cur();if(!c.students.length){toast('Die Liste ist schon leer.');return;}$('clearAskTxt2').textContent=`Wirklich alle ${c.students.length} Namen aus „${c.name}“ löschen?`;$('clearAsk2').hidden=false;};
 $('clearNo2').onclick=()=>{$('clearAsk2').hidden=true;};
 $('clearYes2').onclick=()=>{$('clearAsk2').hidden=true;$('clearYes').onclick();};
-$('clearYes').onclick=()=>{const c=cur(),n=c.students.length;c.students=[];c.seats={};c.locked=[];c.picked=[];c.groups=[];c.rules={apart:[],front:[],alt:false};c.prevSeats=null;delete c.savedLayout;pending=null;pickKey=null;$('clearAsk').hidden=true;commit();toast(`${n} Namen gelöscht. Neue Namen über „Namen bearbeiten …“ eintragen.`);};
+$('clearYes').onclick=()=>{const c=cur(),n=c.students.length;c.students=[];c.seats={};c.locked=[];c.picked=[];c.groups=[];c.rules={apart:[],front:[],alt:false,gapart:[],gseat:false};c.prevSeats=null;delete c.savedLayout;pending=null;pickKey=null;$('clearAsk').hidden=true;commit();toast(`${n} Namen gelöscht. Neue Namen über „Namen bearbeiten …“ eintragen.`);};
 let nameUndo=null;
 const isInit=w=>/^[^\s.]{1,3}\.$/.test(w);
 document.querySelectorAll('[data-fix]').forEach(b=>b.onclick=()=>{const c=cur();if(!c.students.length){toast('Noch keine Namen in dieser Klasse.');return;}const f=b.dataset.fix;
